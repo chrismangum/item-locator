@@ -11,7 +11,6 @@ if (mysqli_connect_errno()) {
     exit();
 }
 
-//$mapquest_api_key = "Fmjtd%7Cluub2q6bn9%2Cba%3Do5-961ldy";
 $mapquest_api_key = "Fmjtd%7Cluub2g022h%2Cag%3Do5-9ubn10";
 
 // the file to get imported
