@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>Client Locator</title>
+	<title>Item Locator</title>
 	<link rel="shortcut icon" href="favicon.png">
 	<meta name="robots" content="noindex, nofollow">
 	<link rel="stylesheet" href="css/global.css">
