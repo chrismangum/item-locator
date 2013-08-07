@@ -225,8 +225,8 @@
 						if (results.length) {
 							map.fitBounds(results[0].geometry.bounds);
 							last_bounds = results[0].geometry.bounds;
-							lat = results[0].geometry.location.jb;
-							lng = results[0].geometry.location.kb;
+							lat = results[0].geometry.location.lb;
+							lng = results[0].geometry.location.mb;
 							search.lat = lat;
 							search.lng = lng;
 							calc_distance_data(lat, lng);
