@@ -42,12 +42,11 @@
 		</div>
 	</div>
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-	<script src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=false"></script>
 	<script src="js/global.min.js"></script>
 	<script>
 		(function ($) {
-			var data, last_search = '', last_bounds = '', sidebar_data, sidebar_markers = [], distance_data, markers = [], filter_data = {},
-				search = {},
+			var data, last_search = '', last_bounds = '', sidebar_data, sidebar_markers = [], distance_data, markers = [], filter_data = {}, last_search_latlng,
 				search_mode = false,
 				$_sidebar_listings = $('.sidebar-listings'),
 				$_name_search = $('#name-search'),
@@ -180,7 +179,7 @@
 					}
 				}
 				if (search_mode) {
-					calc_distance_data(search.lat, search.lng);
+					calc_distance_data(last_search_latlng);
 					distance_data.sort(dynamic_sort('distance'));
 					fill_sidebar(distance_data, true);
 				} else {
@@ -193,23 +192,14 @@
 					return result * 1;
 				}
 			}
-			function calc_distance_data(lat1, lon1) {
-				var i, max, R, dLat, dLon, a, c, d;
+			function calc_distance_data(search_point) {
+				var i, max, dist;
 				distance_data = [];
 				for (i = 0, max = sidebar_data.length; i < max; i += 1) {
-					lat2 = parseFloat(sidebar_data[i].lat);
-					lon2 = parseFloat(sidebar_data[i].lng);
-					R = 3959; // earth radius in miles
-					dLat = (lat2 - lat1).toRad();
-					dLon = (lon2 - lon1).toRad();
-					a =
-						Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-						Math.cos(lat1.toRad()) * Math.cos(lat2.toRad()) *
-						Math.sin(dLon / 2) * Math.sin(dLon / 2);
-					c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); 
-					d = R * c;
+					dist = google.maps.geometry.spherical.computeDistanceBetween(search_point, new google.maps.LatLng(sidebar_data[i].lat, sidebar_data[i].lng));
+					dist *= 0.000621371; //convert meters to miles
 					distance_data[i] = sidebar_data[i];
-					distance_data[i].distance = parseFloat(d.toFixed());
+					distance_data[i].distance = parseFloat(dist.toFixed());
 					distance_data[i].marker_index = i;
 				}
 			}
@@ -221,15 +211,13 @@
 					last_search = address;
 					geocoder = new google.maps.Geocoder();
 					geocoder.geocode({'address': address}, function (results, status) {
-						var lat, lng;
+						var lat, lng,
+							result = results[0].geometry;
 						if (results.length) {
-							map.fitBounds(results[0].geometry.bounds);
-							last_bounds = results[0].geometry.bounds;
-							lat = results[0].geometry.location.lb;
-							lng = results[0].geometry.location.mb;
-							search.lat = lat;
-							search.lng = lng;
-							calc_distance_data(lat, lng);
+							map.fitBounds(result.bounds);
+							last_bounds = result.bounds;
+							last_search_latlng = result.location
+							calc_distance_data(result.location);
 							distance_data.sort(dynamic_sort('distance'));
 							$_label_distance.show().children('span').html(address);
 							$_sidebar_listings.css('border-bottom', (42 + $_label_distance.height() + 24) + 'px solid transparent');
