@@ -211,9 +211,9 @@
 					last_search = address;
 					geocoder = new google.maps.Geocoder();
 					geocoder.geocode({'address': address}, function (results, status) {
-						var lat, lng,
-							result = results[0].geometry;
+						var lat, lng, result;
 						if (results.length) {
+							result = results[0].geometry;
 							map.fitBounds(result.bounds);
 							last_bounds = result.bounds;
 							last_search_latlng = result.location
