@@ -67,11 +67,6 @@
                     center: new google.maps.LatLng(39.8282, -98.5795),
                 });
 
-            if (typeof(Number.prototype.toRad) === "undefined") {
-                Number.prototype.toRad = function() {
-                    return this * Math.PI / 180;
-                }
-            }
             function gen_info_html(client) {
                 var html = ['<div class="info-window">', 
                         '<div class="basic-info">',
