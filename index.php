@@ -63,10 +63,10 @@
                 $_sidebar_search_bar = $('.sidebar-search-bar'),
                 info_window = new google.maps.InfoWindow(),
                 map = new google.maps.Map(document.getElementById('map-canvas'), {
-
                     zoom: 5,
                     center: new google.maps.LatLng(39.8282, -98.5795),
                 });
+
             if (typeof(Number.prototype.toRad) === "undefined") {
                 Number.prototype.toRad = function() {
                     return this * Math.PI / 180;
