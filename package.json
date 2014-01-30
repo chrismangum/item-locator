@@ -1,0 +1,32 @@
+{
+  "name": "item_locator",
+  "version": "0.0.0",
+  "description": "item_locator ============",
+  "main": "Gruntfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@github.com/mtdbass5/item_locator"
+  },
+  "author": "",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/mtdbass5/item_locator/issues"
+  },
+  "homepage": "https://github.com/mtdbass5/item_locator",
+  "dependencies": {
+    "jade": "*",
+    "grunt": "~0.4.2",
+    "matchdep": "~0.3.0",
+    "grunt-nodemon": "~0.1.2",
+    "grunt-contrib-watch": "~0.5.3",
+    "stylus": "~0.41.0",
+    "grunt-concurrent": "~0.4.2",
+    "grunt-contrib-uglify": "~0.2.7",
+    "grunt-contrib-jshint": "~0.7.2",
+    "grunt-contrib-cssmin": "~0.7.0",
+    "express": "~3.4.8"
+  }
+}
