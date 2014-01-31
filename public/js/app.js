@@ -135,7 +135,7 @@ app.directive('locationSearch', ['locationService', '$rootScope', 'googleMap', f
     '</div>',
     link: function (scope, el) {
       function calcDistances(searchPoint) {
-        _.each(scope.locations, function (loc, i) {
+        _.each(scope.locations, function (loc) {
           var dist = google.maps.geometry.spherical.computeDistanceBetween(
             searchPoint,
             new google.maps.LatLng(loc.lat, loc.lng)
@@ -143,8 +143,6 @@ app.directive('locationSearch', ['locationService', '$rootScope', 'googleMap', f
           dist *= 0.000621371; //convert meters to miles
           loc.distance = parseFloat(dist.toFixed());
         });
-        locationService.updateData(scope.locations)
-        $rootScope.$broadcast('search');
       }
 
       scope.locationSearch = function () {
@@ -155,6 +153,8 @@ app.directive('locationSearch', ['locationService', '$rootScope', 'googleMap', f
             result = results[0].geometry;
             googleMap.map.fitBounds(result.bounds);
             calcDistances(result.location);
+            locationService.updateData(scope.locations)
+            $rootScope.$broadcast('search');
           }
         });
       };
