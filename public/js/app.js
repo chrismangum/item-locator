@@ -4,7 +4,6 @@ var app = angular.module('app', []);
 app.controller('mainCtrl', ['$scope', '$httpBackend', '_', '$sce', 'locationService',
   function ($scope, $httpBackend, _, $sce, locationService) {
     $scope.locations = [];
-    //$scope.markers = [];
 
     $scope.exitSearch = function () {
       $scope.searchAddress = '';
@@ -45,7 +44,7 @@ app.controller('mainCtrl', ['$scope', '$httpBackend', '_', '$sce', 'locationServ
   }
 ]);
 
-app.directive('map', ['locationService', function (locationService) {
+app.directive('map', ['locationService', 'googleMap', function (locationService, googleMap) {
   return {
     restrict: 'E',
     scope: {},
@@ -53,21 +52,18 @@ app.directive('map', ['locationService', function (locationService) {
       '<div class="map" id="map-canvas"></div>' +
     '</div>',
     link: function(scope, el) {
-      var infoWindow = new google.maps.InfoWindow();
-      var map = new google.maps.Map(document.getElementById('map-canvas'), {
-        zoom: 5,
-        center: new google.maps.LatLng(39.8282, -98.5795),
-      });
 
       scope.locations = [];
       scope.markers = [];
+
+      googleMap.init();
 
       function fitMapBounds() {
         var bounds = new google.maps.LatLngBounds();  
         _.each(scope.markers, function (marker) {
           bounds.extend(marker.position);
         });
-        map.fitBounds(bounds);
+        googleMap.map.fitBounds(bounds);
       }
 
       function genInfoHtml(loc) {
@@ -101,12 +97,12 @@ app.directive('map', ['locationService', function (locationService) {
 
       function openInfoWindow() {
         infoWindow.setContent(genInfoHtml(scope.locations[this.index]));
-        infoWindow.open(map, this);
+        infoWindow.open(googleMap.map, this);
       }
       function plotShops(data) {
         _.each(scope.locations, function (loc, i) {
           var marker = new google.maps.Marker({
-            map: map,
+            map: googleMap.map,
             position: new google.maps.LatLng(loc.lat, loc.lng),
             index: i
           });
@@ -121,18 +117,15 @@ app.directive('map', ['locationService', function (locationService) {
         plotShops();
       });
 
-      scope.$on('fitBounds', function () {
-
-      });
     }
   }
 }]);
 
-app.directive('locationSearch', ['locationService', '$rootScope', function (locationService, $rootScope) {
+app.directive('locationSearch', ['locationService', '$rootScope', 'googleMap', function (locationService, $rootScope, googleMap) {
   return {
     restrict: 'E',
     scope: {
-      searchAddress: '='
+      searchAddress: '=',
     },
     template: '<div class="search-bar-wrapper">' +
       '<form id="location-search" ng-submit="locationSearch()">' +
@@ -160,8 +153,7 @@ app.directive('locationSearch', ['locationService', '$rootScope', function (loca
           var lat, lng, result;
           if (results.length) {
             result = results[0].geometry;
-            //need to connect to map directive:
-            //map.fitBounds(result.bounds);
+            googleMap.map.fitBounds(result.bounds);
             calcDistances(result.location);
           }
         });
@@ -172,6 +164,21 @@ app.directive('locationSearch', ['locationService', '$rootScope', function (loca
     }
   }
 }]);
+
+app.factory('googleMap', function () {
+  return {
+    initialized: false,
+    init: function () {
+      if (!this.initialized) {
+        this.infoWindow = new google.maps.InfoWindow();
+        this.map = new google.maps.Map(document.getElementById('map-canvas'), {
+          zoom: 5,
+          center: new google.maps.LatLng(39.8282, -98.5795),
+        });
+      }
+    }
+  }
+});
 
 app.factory('locationService', ['$httpBackend', '$rootScope', function ($httpBackend, $rootScope) {
   var originalData = [];
