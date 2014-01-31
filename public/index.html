@@ -11,12 +11,7 @@
   <div class="header">
     <div class="container">
       <a class="logo" href="#" onclick="window.location.reload(true);"><img src="images/logo.png"></a>
-      <div class="search-bar-wrapper">
-        <form id="location-search" ng-submit="locationSearch()">
-          <a href="#" class="search-bar-icon"><i class="icon-search"></i></a>
-          <input ng-model="searchAddress" autofocus placeholder="City, ST" type="text">
-        </form>
-      </div>
+      <location-search></location-search>
     </div>
   </div>
   <div class="filter-bar-wrapper">
@@ -48,9 +43,7 @@
         </div>
       </div>
     </div>
-    <div class="map-wrapper">
-      <div class="map" id="map-canvas"></div>
-    </div>
+    <map></map>
   </div>
   <script src="http://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=false"></script>
   <script src="/vendor/jquery/jquery.min.js"></script>

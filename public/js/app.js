@@ -128,6 +128,27 @@ app.controller('mainCtrl', ['$scope', '$httpBackend', '_', '$sce', 'locationServ
   }
 ]);
 
+app.directive('map', function () {
+  return {
+    restrict: 'E',
+    template: '<div class="map-wrapper">' +
+      '<div class="map" id="map-canvas"></div>' +
+    '</div>'
+  }
+});
+
+app.directive('locationSearch', function () {
+  return {
+    restrict: 'E',
+    template: '<div class="search-bar-wrapper">' +
+      '<form id="location-search" ng-submit="locationSearch()">' +
+        '<a href="#" class="search-bar-icon"><i class="icon-search"></i></a>' +
+        '<input ng-model="searchAddress" autofocus placeholder="City, ST" type="text">' +
+      '</form>' +
+    '</div>'
+  }
+});
+
 app.factory('locationService', ['$httpBackend', '$rootScope', function ($httpBackend, $rootScope) {
   var originalData = [];
   return {
