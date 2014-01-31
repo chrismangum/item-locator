@@ -129,14 +129,25 @@ app.controller('mainCtrl', ['$scope', '$httpBackend', '_', '$sce', 'locationServ
 ]);
 
 app.factory('locationService', ['$httpBackend', '$rootScope', function ($httpBackend, $rootScope) {
+  var originalData = [];
   return {
+    initialized: false,
     data: [],
     init: function () {
       var that = this;
-      $httpBackend('GET', 'clients.json', null, function (status, data) {
-        that.data = angular.fromJson(data);
-        $rootScope.$broadcast('update');
-      });
+      if (!this.initialized) {
+        $httpBackend('GET', 'clients.json', null, function (status, data) {
+          var parsed;
+          if (status === 200) {
+            parsed = angular.fromJson(data);
+            originalData = parsed;
+            that.data = parsed;
+            $rootScope.$broadcast('update');
+          } else {
+            console.log('Problem getting data');
+          }
+        });
+      }
     }
   };
 }]);
