@@ -3,43 +3,6 @@ var app = angular.module('app', []);
 
 app.controller('mainCtrl', ['$scope', '$httpBackend', '_', '$sce', 'locationService',
   function ($scope, $httpBackend, _, $sce, locationService) {
-    $scope.locations = [];
-
-    $scope.exitSearch = function () {
-      $scope.searchAddress = '';
-      $scope.searchMode = false;
-      $scope.sortField = 'name';
-    };
-
-    $scope.getDistanceLabel = function(locations, i) {
-      var string =  '',
-        distance = _.find([500, 250, 100, 50, 20, 10, 5, 1], function (dist) {
-        return (locations[i].distance >= dist && (i === 0 || locations[i - 1].distance < dist));
-      });
-      if (distance) {
-        string = '<div class="label label-miles">' + distance + '+ Miles</div>';
-      }
-      return $sce.trustAsHtml(string);
-    };
-
-    /*$scope.activateLocation = function (i) {
-      map.setCenter($scope.markers[i].position);
-      openInfoWindow.call($scope.markers[i]);
-    };*/
-
-    $scope.$on('update', function () {
-      $scope.locations = locationService.data;
-      $scope.$apply();
-    });
-
-    $scope.$on('search', function () {
-      $scope.locations = locationService.data;
-      $scope.searchMode = true;
-      $scope.sortField = 'distance';
-      $scope.queryAddress = $scope.searchAddress;
-      $scope.$apply();
-    });
-
     locationService.init();
   }
 ]);
@@ -217,3 +180,76 @@ app.factory('locationService', ['$httpBackend', '$rootScope', function ($httpBac
 app.factory('_', function () {
   return _;
 });
+
+
+app.directive('list', ['locationService', '$sce', function (locationService, $sce) {
+    return {
+        restrict: 'E', 
+        scope:{
+          searchAddress:'='
+        },
+        //templateUrl:'js/sbui_list/list.html',
+        template:'<div class="sidebar">'+
+          '<div class="sidebar-search-bar">'+
+            '<div class="search-bar-wrapper">'+
+              '<a class="search-bar-icon"><i class="icon-search"></i></a>'+
+              '<input ng-model="searchName" id="name-search" placeholder="Search by Location Name" type="text">'+
+            '</div>'+
+          '</div>'+
+          '<div ng-show="searchMode" class="label label-distance">'+
+            'Distance from <span class="label-search-query">{{queryAddress}}</span>'+
+            '<a class="label-close" href="#"><i class="icon-cancel-circle" ng-click="exitSearch()"></i></a>'+
+          '</div>'+
+          '<div class="sidebar-listings">'+
+            '<div ng-repeat="location in (filteredLocs = (locations | filter:{name: searchName} | orderBy:sortField))" class="listing-wrapper">'+
+              '<div ng-if="searchMode" ng-bind-html="getDistanceLabel(filteredLocs, $index)"></div>'+
+              '<a ng-click="activateLocation(location.index)" class="sidebar-listing">'+
+                '<div class="listing-info">'+
+                  '<div class="info-name">{{location.name}}</div>'+
+                  '<div class="info-address1">{{location.address}}</div>'+
+                  '<div class="info-address2">{{location.city}}, {{location.state}} {{location.zip}}</div>'+
+                '</div>'+
+              '</a>'+
+            '</div>'+
+          '</div>'+
+        '</div>',
+        link:function(scope){
+          scope.locations = [];
+
+          /*scope.activateLocation = function (i) {
+            map.setCenter(scope.markers[i].position);
+            openInfoWindow.call(scope.markers[i]);
+          };*/
+
+          scope.$on('update', function () {
+            scope.locations = locationService.data;
+            scope.$apply();
+          });
+
+          scope.$on('search', function () {
+            scope.locations = locationService.data;
+            scope.searchMode = true;
+            scope.sortField = 'distance';
+            scope.queryAddress = scope.searchAddress;
+            scope.$apply();
+          });
+
+          scope.exitSearch = function () {
+            scope.searchAddress = '';
+            scope.searchMode = false;
+            scope.sortField = 'name';
+          };
+
+          scope.getDistanceLabel = function(locations, i) {
+            var string =  '',
+                  distance = _.find([500, 250, 100, 50, 20, 10, 5, 1], function (dist) {
+              return (locations[i].distance >= dist && (i === 0 || locations[i - 1].distance < dist));
+            });
+            if (distance) {
+              string = '<div class="label label-miles">' + distance + '+ Miles</div>';
+            }
+            return $sce.trustAsHtml(string);
+          };
+        }
+    };
+}]);
