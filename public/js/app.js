@@ -96,8 +96,8 @@ app.directive('map', ['locationService', 'googleMap', function (locationService,
       }
 
       function openInfoWindow() {
-        infoWindow.setContent(genInfoHtml(scope.locations[this.index]));
-        infoWindow.open(googleMap.map, this);
+        googleMap.infoWindow.setContent(genInfoHtml(scope.locations[this.index]));
+        googleMap.infoWindow.open(googleMap.map, this);
       }
       function plotShops(data) {
         _.each(scope.locations, function (loc, i) {
