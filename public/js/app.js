@@ -1,29 +1,43 @@
 
 var app = angular.module('app', []);
 
-app.controller('mainCtrl', ['$scope', '$httpBackend', '_', '$sce', 'locationService',
-  function ($scope, $httpBackend, _, $sce, locationService) {
-    locationService.init();
+app.controller('mainCtrl', ['$scope', 'locationService', function ($scope, locationService) {
+    //variables accessable to all child directives;
+    $scope.data = [];
+    $scope.activeItem = null;
+
+    $scope.deactivateItem = function () {
+      $scope.activeItem = null;
+    };
+    $scope.activateItem = function (i) {
+      $scope.activeItem = $scope.data[i];
+    };
+
+    locationService.init(function (data) {
+      $scope.data = data;
+      $scope.$apply();
+    });
   }
 ]);
 
-app.directive('map', ['locationService', 'googleMap', function (locationService, googleMap) {
+app.directive('map', ['googleMap', function (googleMap) {
   return {
     restrict: 'E',
-    scope: {},
     template: '<div class="map-wrapper">' +
       '<div class="map" id="map-canvas"></div>' +
     '</div>',
     link: function(scope, el) {
-
-      scope.locations = [];
-      scope.markers = [];
+      var markers = [];
 
       googleMap.init();
+      google.maps.event.addListener(googleMap.infoWindow, 'closeclick', function () {
+        scope.deactivateItem();
+        scope.$apply();
+      });
 
       function fitMapBounds() {
         var bounds = new google.maps.LatLngBounds();  
-        _.each(scope.markers, function (marker) {
+        _.each(markers, function (marker) {
           bounds.extend(marker.position);
         });
         googleMap.map.fitBounds(bounds);
@@ -58,38 +72,38 @@ app.directive('map', ['locationService', 'googleMap', function (locationService,
         return html.join('');
       }
 
-      function openInfoWindow() {
-        googleMap.infoWindow.setContent(genInfoHtml(scope.locations[this.index]));
-        googleMap.infoWindow.open(googleMap.map, this);
-      }
       function plotShops(data) {
-        _.each(scope.locations, function (loc, i) {
+        _.each(scope.data, function (loc, i) {
           var marker = new google.maps.Marker({
             map: googleMap.map,
             position: new google.maps.LatLng(loc.lat, loc.lng),
             index: i
           });
-          google.maps.event.addListener(marker, 'click', openInfoWindow);
-          scope.markers[i] = marker;
+          google.maps.event.addListener(marker, 'click', function () {
+            scope.activateItem(this.index);
+            scope.$apply();
+          });
+          markers[i] = marker;
         });
         fitMapBounds();
       }
-
-      scope.$on('update', function () {
-        scope.locations = locationService.data;
+      scope.$watch('activeItem', function (n) {
+        if (n) {
+          googleMap.map.setCenter(markers[n.index].position);
+          googleMap.infoWindow.setContent(genInfoHtml(scope.data[n.index]));
+          googleMap.infoWindow.open(googleMap.map, markers[n.index]);
+        }
+      });
+      scope.$watch('data', function () {
         plotShops();
       });
-
     }
   }
 }]);
 
-app.directive('locationSearch', ['locationService', '$rootScope', 'googleMap', function (locationService, $rootScope, googleMap) {
+app.directive('locationSearch', ['$rootScope', 'googleMap', function ($rootScope, googleMap) {
   return {
     restrict: 'E',
-    scope: {
-      searchAddress: '=',
-    },
     template: '<div class="search-bar-wrapper">' +
       '<form id="location-search" ng-submit="locationSearch()">' +
         '<a href="#" class="search-bar-icon"><i class="icon-search"></i></a>' +
@@ -98,7 +112,7 @@ app.directive('locationSearch', ['locationService', '$rootScope', 'googleMap', f
     '</div>',
     link: function (scope, el) {
       function calcDistances(searchPoint) {
-        _.each(scope.locations, function (loc) {
+        _.each(scope.data, function (loc) {
           var dist = google.maps.geometry.spherical.computeDistanceBetween(
             searchPoint,
             new google.maps.LatLng(loc.lat, loc.lng)
@@ -116,14 +130,10 @@ app.directive('locationSearch', ['locationService', '$rootScope', 'googleMap', f
             result = results[0].geometry;
             googleMap.map.fitBounds(result.bounds);
             calcDistances(result.location);
-            locationService.updateData(scope.locations)
             $rootScope.$broadcast('search');
           }
         });
       };
-      scope.$on('update', function () {
-        scope.locations = locationService.data;
-      });
     }
   }
 }]);
@@ -143,6 +153,50 @@ app.factory('googleMap', function () {
   }
 });
 
+app.directive('list', ['$sce', function ($sce) {
+  return {
+    restrict: 'E', 
+    templateUrl: 'list.html',
+    link: function (scope) {
+
+      scope.$watch('activeItem', function (n, o) {
+        if (o !== n) {
+          if (o) {
+            o.name = o.name.replace('*', '');
+          }
+          if (n) {
+            n.name += '*';
+          }
+        }
+      });
+
+      scope.$on('search', function () {
+        scope.searchMode = true;
+        scope.sortField = 'distance';
+        scope.queryAddress = scope.searchAddress;
+        scope.$apply();
+      });
+
+      scope.exitSearch = function () {
+        scope.searchAddress = '';
+        scope.searchMode = false;
+        scope.sortField = 'name';
+      };
+
+      scope.getDistanceLabel = function(locations, i) {
+        var string =  '',
+              distance = _.find([500, 250, 100, 50, 20, 10, 5, 1], function (dist) {
+          return (locations[i].distance >= dist && (i === 0 || locations[i - 1].distance < dist));
+        });
+        if (distance) {
+          string = '<div class="label label-miles">' + distance + '+ Miles</div>';
+        }
+        return $sce.trustAsHtml(string);
+      };
+    }
+  };
+}]);
+
 app.factory('locationService', ['$httpBackend', '$rootScope', function ($httpBackend, $rootScope) {
   var originalData = [];
   return {
@@ -150,15 +204,8 @@ app.factory('locationService', ['$httpBackend', '$rootScope', function ($httpBac
     data: [],
     resetData: function(data) {
       this.data = originalData;
-      $rootScope.$broadcast('update');
     },
-    updateData: function(data, broadcast) {
-      this.data = data;
-      if (broadcast) {
-        $rootScope.$broadcast('update');
-      }
-    },
-    init: function () {
+    init: function (callback) {
       var that = this;
       if (!this.initialized) {
         $httpBackend('GET', 'clients.json', null, function (status, data) {
@@ -167,11 +214,13 @@ app.factory('locationService', ['$httpBackend', '$rootScope', function ($httpBac
             parsed = angular.fromJson(data);
             originalData = parsed;
             that.data = parsed;
-            $rootScope.$broadcast('update');
+            callback(that.data);
           } else {
             console.log('Problem getting data');
           }
         });
+      } else {
+        callback(this.data);
       }
     }
   };
@@ -181,75 +230,3 @@ app.factory('_', function () {
   return _;
 });
 
-
-app.directive('list', ['locationService', '$sce', function (locationService, $sce) {
-    return {
-        restrict: 'E', 
-        scope:{
-          searchAddress:'='
-        },
-        //templateUrl:'js/sbui_list/list.html',
-        template:'<div class="sidebar">'+
-          '<div class="sidebar-search-bar">'+
-            '<div class="search-bar-wrapper">'+
-              '<a class="search-bar-icon"><i class="icon-search"></i></a>'+
-              '<input ng-model="searchName" id="name-search" placeholder="Search by Location Name" type="text">'+
-            '</div>'+
-          '</div>'+
-          '<div ng-show="searchMode" class="label label-distance">'+
-            'Distance from <span class="label-search-query">{{queryAddress}}</span>'+
-            '<a class="label-close" href="#"><i class="icon-cancel-circle" ng-click="exitSearch()"></i></a>'+
-          '</div>'+
-          '<div class="sidebar-listings">'+
-            '<div ng-repeat="location in (filteredLocs = (locations | filter:{name: searchName} | orderBy:sortField))" class="listing-wrapper">'+
-              '<div ng-if="searchMode" ng-bind-html="getDistanceLabel(filteredLocs, $index)"></div>'+
-              '<a ng-click="activateLocation(location.index)" class="sidebar-listing">'+
-                '<div class="listing-info">'+
-                  '<div class="info-name">{{location.name}}</div>'+
-                  '<div class="info-address1">{{location.address}}</div>'+
-                  '<div class="info-address2">{{location.city}}, {{location.state}} {{location.zip}}</div>'+
-                '</div>'+
-              '</a>'+
-            '</div>'+
-          '</div>'+
-        '</div>',
-        link:function(scope){
-          scope.locations = [];
-
-          /*scope.activateLocation = function (i) {
-            map.setCenter(scope.markers[i].position);
-            openInfoWindow.call(scope.markers[i]);
-          };*/
-
-          scope.$on('update', function () {
-            scope.locations = locationService.data;
-            scope.$apply();
-          });
-
-          scope.$on('search', function () {
-            scope.locations = locationService.data;
-            scope.searchMode = true;
-            scope.sortField = 'distance';
-            scope.queryAddress = scope.searchAddress;
-            scope.$apply();
-          });
-
-          scope.exitSearch = function () {
-            scope.searchAddress = '';
-            scope.searchMode = false;
-            scope.sortField = 'name';
-          };
-
-          scope.getDistanceLabel = function(locations, i) {
-            var string =  '',
-                  distance = _.find([500, 250, 100, 50, 20, 10, 5, 1], function (dist) {
-              return (locations[i].distance >= dist && (i === 0 || locations[i - 1].distance < dist));
-            });
-            if (distance) {
-              string = '<div class="label label-miles">' + distance + '+ Miles</div>';
-            }
-            return $sce.trustAsHtml(string);
-          };
-        }
-    };
-}]);
