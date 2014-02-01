@@ -22,7 +22,10 @@ app.controller('mainCtrl', ['$scope', 'locationService',
     };
     $scope.activateItem = function (i) {
       $scope.activeItem = $scope.data[i];
+      $scope.$apply();
+      $scope.activateItemCallback();
     };
+    $scope.activateItemCallback = function () {};
 
     function sortByKey(arr, key, desc) {
       var direction = desc ? -1 : 1;
@@ -74,7 +77,22 @@ app.controller('mainCtrl', ['$scope', 'locationService',
   }
 ]);
 
-app.directive('map', function () {
+app.directive('activateItem', function () {
+  return function (scope, el, attrs) {
+    el.on('click', function() {
+      scope.activateItem(attrs.activateItem);
+    });
+  }
+});
+
+app.directive('infoWindow', function () {
+  return {
+    restrict: 'E',
+    templateUrl: 'info-window.html'
+  }
+});
+
+app.directive('map', ['$compile', function ($compile) {
   return {
     restrict: 'E',
     replace: true,
@@ -84,7 +102,8 @@ app.directive('map', function () {
     link: function(scope, el) {
       var pinClick,
         markers = [],
-        infoWindow = new google.maps.InfoWindow();
+        infoWindow = new google.maps.InfoWindow(),
+        infoWindowTemplate = $compile('<info-window></info-window>')(scope);
 
       google.maps.event.addListener(infoWindow, 'closeclick', function () {
         scope.deactivateItem();
@@ -97,35 +116,6 @@ app.directive('map', function () {
           bounds.extend(marker.position);
         });
         scope.map.fitBounds(bounds);
-      }
-
-      function genInfoHtml(loc) {
-        var html = [
-          '<div class="info-window">', 
-          '<div class="basic-info">',
-          '<div class="info-name">'
-        ];
-        if (loc.website !== '-') {
-          if (loc.website.indexOf('http://') === -1) {
-            loc.website = 'http://' + loc.website;
-          }
-          html.push('<a target="_blank" href="', loc.website, '">', loc.name,'</a>');
-        } else {
-          html.push(loc.name);
-        }
-        html.push('</div><div class="info-address1">', loc.address,'</div>',
-            '<div class="info-address2">', loc.city, ', ', loc.state, ' ', loc.zip, '</div>',
-          '</div>',
-          '<div class="row-fluid more-info">',
-            '<div class="span6">',
-              '<div class="filter-info-wrapper">',
-                '<div class="label">Phone</div>',
-                '<div class="filter-info">', loc.phone, '</div>',
-              '</div>',
-            '</div>',
-          '</div>',
-        '</div>');
-        return html.join('');
       }
 
       function plotShops() {
@@ -150,10 +140,13 @@ app.directive('map', function () {
           if (!pinClick) {
             scope.map.setCenter(markers[item.index].position);
           }
-          infoWindow.setContent(genInfoHtml(scope.data[item.index]));
           infoWindow.open(scope.map, markers[item.index]);
         }
       });
+
+      scope.activateItemCallback = function() {
+        infoWindow.setContent(infoWindowTemplate[0].innerHTML);
+      };
 
       scope.$watch('data', function (newData, oldData) {
         plotShops();
@@ -164,7 +157,7 @@ app.directive('map', function () {
       });
     }
   }
-});
+}]);
 
 app.directive('locationSearch', function () {
   return {
