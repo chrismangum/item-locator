@@ -3,10 +3,14 @@ var app = angular.module('app', []);
 
 app.controller('mainCtrl', ['$scope', 'locationService',
   function ($scope, locationService) {
-    //variables accessable to all child directives;
+    //variables accessable to all child directives
     $scope.data = null;
     $scope.filteredData = null;
     $scope.activeItem = null;
+    $scope.map = new google.maps.Map(document.getElementById('map-canvas'), {
+      zoom: 5,
+      center: new google.maps.LatLng(39.8282, -98.5795),
+    });
 
     $scope.deactivateItem = function () {
       $scope.activeItem = null;
@@ -22,17 +26,18 @@ app.controller('mainCtrl', ['$scope', 'locationService',
   }
 ]);
 
-app.directive('map', ['googleMap', function (googleMap) {
+app.directive('map', function () {
   return {
     restrict: 'E',
     template: '<div class="map-wrapper">' +
       '<div class="map" id="map-canvas"></div>' +
     '</div>',
     link: function(scope, el) {
-      var markers = [];
+      var pinClick,
+        markers = [],
+        infoWindow = new google.maps.InfoWindow();
 
-      googleMap.init();
-      google.maps.event.addListener(googleMap.infoWindow, 'closeclick', function () {
+      google.maps.event.addListener(infoWindow, 'closeclick', function () {
         scope.deactivateItem();
         scope.$apply();
       });
@@ -42,7 +47,7 @@ app.directive('map', ['googleMap', function (googleMap) {
         _.each(markers, function (marker) {
           bounds.extend(marker.position);
         });
-        googleMap.map.fitBounds(bounds);
+        scope.map.fitBounds(bounds);
       }
 
       function genInfoHtml(loc) {
@@ -77,24 +82,26 @@ app.directive('map', ['googleMap', function (googleMap) {
       function plotShops() {
         _.each(scope.data, function (loc, i) {
           var marker = new google.maps.Marker({
-            map: googleMap.map,
+            map: scope.map,
             position: new google.maps.LatLng(loc.lat, loc.lng),
             index: i
           });
           google.maps.event.addListener(marker, 'click', function () {
+            pinClick = true;
             scope.activateItem(this.index);
             scope.$apply();
+            pinClick = false;
           });
           markers[i] = marker;
         });
       }
-      scope.$watch('activeItem', function (newItem) {
-        var i;
-        if (newItem) {
-          i = newItem.index;
-          googleMap.map.setCenter(markers[i].position);
-          googleMap.infoWindow.setContent(genInfoHtml(scope.data[i]));
-          googleMap.infoWindow.open(googleMap.map, markers[i]);
+      scope.$watch('activeItem', function (item) {
+        if (item) {
+          if (!pinClick) {
+            scope.map.setCenter(markers[item.index].position);
+          }
+          infoWindow.setContent(genInfoHtml(scope.data[item.index]));
+          infoWindow.open(scope.map, markers[item.index]);
         }
       });
       scope.$watch('data', function (newData, oldData) {
@@ -106,10 +113,10 @@ app.directive('map', ['googleMap', function (googleMap) {
       });
     }
   }
-}]);
+});
 
-app.directive('locationSearch', ['$rootScope', 'googleMap',
-  function ($rootScope, googleMap) {
+app.directive('locationSearch', ['$rootScope',
+  function ($rootScope) {
     return {
       restrict: 'E',
       template: '<div class="search-bar-wrapper">' +
@@ -136,7 +143,7 @@ app.directive('locationSearch', ['$rootScope', 'googleMap',
             var lat, lng, result;
             if (results.length) {
               result = results[0].geometry;
-              googleMap.map.fitBounds(result.bounds);
+              scope.map.fitBounds(result.bounds);
               calcDistances(result.location);
               $rootScope.$broadcast('search');
             }
@@ -190,21 +197,6 @@ app.directive('list', ['$sce', function ($sce) {
     }
   };
 }]);
-
-app.factory('googleMap', function () {
-  return {
-    initialized: false,
-    init: function () {
-      if (!this.initialized) {
-        this.infoWindow = new google.maps.InfoWindow();
-        this.map = new google.maps.Map(document.getElementById('map-canvas'), {
-          zoom: 5,
-          center: new google.maps.LatLng(39.8282, -98.5795),
-        });
-      }
-    }
-  }
-});
 
 app.factory('locationService', ['$httpBackend',
   function ($httpBackend) {
