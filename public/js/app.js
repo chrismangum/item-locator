@@ -87,11 +87,13 @@ app.directive('map', ['googleMap', function (googleMap) {
         });
         fitMapBounds();
       }
-      scope.$watch('activeItem', function (n) {
-        if (n) {
-          googleMap.map.setCenter(markers[n.index].position);
-          googleMap.infoWindow.setContent(genInfoHtml(scope.data[n.index]));
-          googleMap.infoWindow.open(googleMap.map, markers[n.index]);
+      scope.$watch('activeItem', function (newItem) {
+        var i;
+        if (newItem) {
+          i = newItem.index;
+          googleMap.map.setCenter(markers[i].position);
+          googleMap.infoWindow.setContent(genInfoHtml(scope.data[i]));
+          googleMap.infoWindow.open(googleMap.map, markers[i]);
         }
       });
       scope.$watch('data', function () {
@@ -159,13 +161,13 @@ app.directive('list', ['$sce', function ($sce) {
     templateUrl: 'list.html',
     link: function (scope) {
 
-      scope.$watch('activeItem', function (n, o) {
-        if (o !== n) {
-          if (o) {
-            o.name = o.name.replace('*', '');
+      scope.$watch('activeItem', function (newItem, oldItem) {
+        if (oldItem !== newItem) {
+          if (oldItem) {
+            oldItem.name = oldItem.name.replace('*', '');
           }
-          if (n) {
-            n.name += '*';
+          if (newItem) {
+            newItem.name += '*';
           }
         }
       });
@@ -198,13 +200,9 @@ app.directive('list', ['$sce', function ($sce) {
 }]);
 
 app.factory('locationService', ['$httpBackend', '$rootScope', function ($httpBackend, $rootScope) {
-  var originalData = [];
   return {
     initialized: false,
     data: [],
-    resetData: function(data) {
-      this.data = originalData;
-    },
     init: function (callback) {
       var that = this;
       if (!this.initialized) {
