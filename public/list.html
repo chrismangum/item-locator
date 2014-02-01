@@ -2,22 +2,17 @@
   <div class="sidebar-search-bar">
     <div class="search-bar-wrapper">
       <a class="search-bar-icon"><i class="icon-search"></i></a>
-      <input ng-model="searchName" id="name-search" placeholder="Search by Location Name" type="text">
+      <input ng-model="searchValue" placeholder="Search by Location Name" type="text">
     </div>
   </div>
-  <div ng-show="!isArray(groupedData)" class="label label-distance">
-    Distance from <span class="label-search-query">{{queryAddress}}</span>
-    <a class="label-close" href="#"><i class="icon-cancel-circle" ng-click="exitSearch()"></i></a>
+  <div ng-show="groupLabel" class="label label-distance">
+    <span class="label-search-query">{{groupLabel}}</span>
+    <a class="label-close" href="#"><i class="icon-cancel-circle" ng-click="unGroup()"></i></a>
   </div>
   <div class="sidebar-listings">
-    <div ng-if="!isArray(groupedData)">
-      <div ng-repeat="key in groupKeys" class="sidebar-grouping">
-        <div class="label label-miles">{{key + groupLabel}}</div>
-        <a ng-repeat="item in groupedData[key] | filter:{name: searchName}" activate-item="{{item.index}}" class="sidebar-listing" ng-transclude></a>
-      </div>
-    </div>
-    <div ng-if="isArray(groupedData)">
-      <a ng-repeat="item in groupedData | filter:{name: searchName}" activate-item="{{item.index}}" class="sidebar-listing" ng-transclude></a>
+    <div ng-repeat="group in filteredData">
+      <div ng-if="group.name" class="label label-miles">{{group.name}}</div>
+      <a ng-repeat="item in group.data" activate-item="{{item.index}}" class="sidebar-listing" ng-transclude></a>
     </div>
   </div>
 </div>

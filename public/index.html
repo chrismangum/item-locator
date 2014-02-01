@@ -11,14 +11,14 @@
   <div class="header">
     <div class="container">
       <a class="logo" href="#" onclick="window.location.reload(true);"><img src="images/logo.png"></a>
-      <location-search></location-search>
+      <location-search map="map" search-point="searchPoint"></location-search>
     </div>
   </div>
   <div class="filter-bar-wrapper">
   </div>
   <div class="content">
     <div class="sidebar-wrapper">
-      <list>
+      <list filtered-data="filteredData" group-label="groupLabel" data="data" active-item="activeItem">
         <div class="listing-info">
           <div class="info-name">{{item.name}}</div>
           <div class="info-address1">{{item.address}}</div>
