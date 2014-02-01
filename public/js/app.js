@@ -1,9 +1,11 @@
 
 var app = angular.module('app', []);
 
-app.controller('mainCtrl', ['$scope', 'locationService', function ($scope, locationService) {
+app.controller('mainCtrl', ['$scope', 'locationService',
+  function ($scope, locationService) {
     //variables accessable to all child directives;
-    $scope.data = [];
+    $scope.data = null;
+    $scope.filteredData = null;
     $scope.activeItem = null;
 
     $scope.deactivateItem = function () {
@@ -72,7 +74,7 @@ app.directive('map', ['googleMap', function (googleMap) {
         return html.join('');
       }
 
-      function plotShops(data) {
+      function plotShops() {
         _.each(scope.data, function (loc, i) {
           var marker = new google.maps.Marker({
             map: googleMap.map,
@@ -85,7 +87,6 @@ app.directive('map', ['googleMap', function (googleMap) {
           });
           markers[i] = marker;
         });
-        fitMapBounds();
       }
       scope.$watch('activeItem', function (newItem) {
         var i;
@@ -96,49 +97,55 @@ app.directive('map', ['googleMap', function (googleMap) {
           googleMap.infoWindow.open(googleMap.map, markers[i]);
         }
       });
-      scope.$watch('data', function () {
+      scope.$watch('data', function (newData, oldData) {
         plotShops();
+        //data is only null at page load, so fit map bounds:
+        if (oldData === null) {
+          fitMapBounds();
+        }
       });
     }
   }
 }]);
 
-app.directive('locationSearch', ['$rootScope', 'googleMap', function ($rootScope, googleMap) {
-  return {
-    restrict: 'E',
-    template: '<div class="search-bar-wrapper">' +
-      '<form id="location-search" ng-submit="locationSearch()">' +
-        '<a href="#" class="search-bar-icon"><i class="icon-search"></i></a>' +
-        '<input ng-model="searchAddress" autofocus placeholder="City, ST" type="text">' +
-      '</form>' +
-    '</div>',
-    link: function (scope, el) {
-      function calcDistances(searchPoint) {
-        _.each(scope.data, function (loc) {
-          var dist = google.maps.geometry.spherical.computeDistanceBetween(
-            searchPoint,
-            new google.maps.LatLng(loc.lat, loc.lng)
-          );
-          dist *= 0.000621371; //convert meters to miles
-          loc.distance = parseFloat(dist.toFixed());
-        });
-      }
+app.directive('locationSearch', ['$rootScope', 'googleMap',
+  function ($rootScope, googleMap) {
+    return {
+      restrict: 'E',
+      template: '<div class="search-bar-wrapper">' +
+        '<form id="location-search" ng-submit="locationSearch()">' +
+          '<a href="#" class="search-bar-icon"><i class="icon-search"></i></a>' +
+          '<input ng-model="searchAddress" autofocus placeholder="City, ST" type="text">' +
+        '</form>' +
+      '</div>',
+      link: function (scope, el) {
+        function calcDistances(searchPoint) {
+          _.each(scope.data, function (loc) {
+            var dist = google.maps.geometry.spherical.computeDistanceBetween(
+              searchPoint,
+              new google.maps.LatLng(loc.lat, loc.lng)
+            );
+            dist *= 0.000621371; //convert meters to miles
+            loc.distance = parseFloat(dist.toFixed());
+          });
+        }
 
-      scope.locationSearch = function () {
-        var geocoder = new google.maps.Geocoder();
-        geocoder.geocode({'address': scope.searchAddress}, function (results, status) {
-          var lat, lng, result;
-          if (results.length) {
-            result = results[0].geometry;
-            googleMap.map.fitBounds(result.bounds);
-            calcDistances(result.location);
-            $rootScope.$broadcast('search');
-          }
-        });
-      };
+        scope.locationSearch = function () {
+          var geocoder = new google.maps.Geocoder();
+          geocoder.geocode({'address': scope.searchAddress}, function (results, status) {
+            var lat, lng, result;
+            if (results.length) {
+              result = results[0].geometry;
+              googleMap.map.fitBounds(result.bounds);
+              calcDistances(result.location);
+              $rootScope.$broadcast('search');
+            }
+          });
+        };
+      }
     }
   }
-}]);
+]);
 
 app.factory('googleMap', function () {
   return {
@@ -185,10 +192,10 @@ app.directive('list', ['$sce', function ($sce) {
         scope.sortField = 'name';
       };
 
-      scope.getDistanceLabel = function(locations, i) {
+      scope.getDistanceLabel = function(i) {
         var string =  '',
               distance = _.find([500, 250, 100, 50, 20, 10, 5, 1], function (dist) {
-          return (locations[i].distance >= dist && (i === 0 || locations[i - 1].distance < dist));
+          return (scope.filteredData[i].distance >= dist && (i === 0 || scope.filteredData[i - 1].distance < dist));
         });
         if (distance) {
           string = '<div class="label label-miles">' + distance + '+ Miles</div>';
@@ -199,30 +206,32 @@ app.directive('list', ['$sce', function ($sce) {
   };
 }]);
 
-app.factory('locationService', ['$httpBackend', '$rootScope', function ($httpBackend, $rootScope) {
-  return {
-    initialized: false,
-    data: [],
-    init: function (callback) {
-      var that = this;
-      if (!this.initialized) {
-        $httpBackend('GET', 'clients.json', null, function (status, data) {
-          var parsed;
-          if (status === 200) {
-            parsed = angular.fromJson(data);
-            originalData = parsed;
-            that.data = parsed;
-            callback(that.data);
-          } else {
-            console.log('Problem getting data');
-          }
-        });
-      } else {
-        callback(this.data);
+app.factory('locationService', ['$httpBackend',
+  function ($httpBackend) {
+    return {
+      initialized: false,
+      data: [],
+      init: function (callback) {
+        var that = this;
+        if (!this.initialized) {
+          $httpBackend('GET', 'clients.json', null, function (status, data) {
+            var parsed;
+            if (status === 200) {
+              parsed = angular.fromJson(data);
+              originalData = parsed;
+              that.data = parsed;
+              callback(that.data);
+            } else {
+              console.log('Problem getting data');
+            }
+          });
+        } else {
+          callback(this.data);
+        }
       }
-    }
-  };
-}]);
+    };
+  }
+]);
 
 app.factory('_', function () {
   return _;

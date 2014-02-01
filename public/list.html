@@ -10,13 +10,13 @@
     <a class="label-close" href="#"><i class="icon-cancel-circle" ng-click="exitSearch()"></i></a>
   </div>
   <div class="sidebar-listings">
-    <div ng-repeat="location in (filteredLocs = (data | filter:{name: searchName} | orderBy:sortField))" class="listing-wrapper">
-      <div ng-if="searchMode" ng-bind-html="getDistanceLabel(filteredLocs, $index)"></div>
-      <a ng-click="activateItem(location.index)" class="sidebar-listing">
+    <div ng-repeat="item in (filteredData = (data | filter:{name: searchName} | orderBy:sortField))" class="listing-wrapper">
+      <div ng-if="searchMode" ng-bind-html="getDistanceLabel($index)"></div>
+      <a ng-click="activateItem(item.index)" class="sidebar-listing">
         <div class="listing-info">
-          <div class="info-name">{{location.name}}</div>
-          <div class="info-address1">{{location.address}}</div>
-          <div class="info-address2">{{location.city}}, {{location.state}} {{location.zip}}</div>
+          <div class="info-name">{{item.name}}</div>
+          <div class="info-address1">{{item.address}}</div>
+          <div class="info-address2">{{item.city}}, {{item.state}} {{item.zip}}</div>
         </div>
       </a>
     </div>
