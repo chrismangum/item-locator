@@ -5,8 +5,13 @@ app.controller('mainCtrl', ['$scope', 'locationService',
   function ($scope, locationService) {
     //variables accessable to all child directives
     $scope.data = null;
-    $scope.filteredData = null;
+
+    $scope.groupedData = {};
+    $scope.groupKeys = null;
+    $scope.groupLabel = '+ Miles';
+
     $scope.activeItem = null;
+
     $scope.map = new google.maps.Map(document.getElementById('map-canvas'), {
       zoom: 5,
       center: new google.maps.LatLng(39.8282, -98.5795),
@@ -21,6 +26,7 @@ app.controller('mainCtrl', ['$scope', 'locationService',
 
     locationService.init(function (data) {
       $scope.data = data;
+      $scope.groupedData = data;
       $scope.$apply();
     });
   }
@@ -137,6 +143,31 @@ app.directive('locationSearch', function () {
           loc.distance = parseFloat(dist.toFixed());
         });
       }
+      function sortByKey(arr, key, desc) {
+        var direction = desc ? -1 : 1;
+        return arr.sort(function (a, b) {
+          var result = a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : 0;
+          return result * direction;
+        });
+      }
+      function getGroupedData(arr) {
+        var tempArr = _.clone(arr);
+        sortByKey(tempArr, 'distance');
+        _.each(tempArr, function (loc) {
+          var distance = _.find([500, 250, 100, 50, 20, 10, 5, 1], function (dist) {
+            return loc.distance >= dist;
+          });
+          loc.group = distance;
+        });
+        return _.groupBy(tempArr, 'group');
+      }
+      function getGroupKeys (obj) {
+        return _.map(_.keys(obj), function (item) {
+          return parseInt(item);
+        }).sort(function (a, b) {
+          return a - b;
+        });
+      }
 
       scope.locationSearch = function () {
         var geocoder = new google.maps.Geocoder();
@@ -146,9 +177,8 @@ app.directive('locationSearch', function () {
             result = results[0].geometry;
             scope.map.fitBounds(result.bounds);
             calcDistances(result.location);
-            //regroup the data object instead of this:
-            scope.searchMode = true;
-            scope.sortField = 'distance';
+            scope.groupedData = getGroupedData(scope.data);
+            scope.groupKeys = getGroupKeys(scope.groupedData);
             scope.queryAddress = scope.searchAddress;
             scope.$apply();
           }
@@ -158,11 +188,13 @@ app.directive('locationSearch', function () {
   }
 });
 
-app.directive('list', ['$sce', function ($sce) {
+app.directive('list', function () {
   return {
     restrict: 'E', 
     templateUrl: 'list.html',
     link: function (scope) {
+      scope.isArray = _.isArray;
+
       scope.$watch('activeItem', function (newItem, oldItem) {
         if (oldItem !== newItem) {
           if (oldItem) {
@@ -176,23 +208,18 @@ app.directive('list', ['$sce', function ($sce) {
 
       scope.exitSearch = function () {
         scope.searchAddress = '';
-        scope.searchMode = false;
-        scope.sortField = 'name';
-      };
-
-      scope.getDistanceLabel = function(i) {
-        var string =  '',
-              distance = _.find([500, 250, 100, 50, 20, 10, 5, 1], function (dist) {
-          return (scope.filteredData[i].distance >= dist && (i === 0 || scope.filteredData[i - 1].distance < dist));
-        });
-        if (distance) {
-          string = '<div class="label label-miles">' + distance + '+ Miles</div>';
-        }
-        return $sce.trustAsHtml(string);
+        scope.groupedData = scope.data;
       };
     }
   };
-}]);
+});
+
+app.filter('orderByKeys', function () {
+  return function (items) {
+    console.log('ordering by keys', items);
+    return items;
+  };
+});
 
 app.factory('locationService', ['$httpBackend',
   function ($httpBackend) {
