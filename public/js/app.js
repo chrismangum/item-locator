@@ -24,6 +24,48 @@ app.controller('mainCtrl', ['$scope', 'locationService',
       $scope.activeItem = $scope.data[i];
     };
 
+    function sortByKey(arr, key, desc) {
+      var direction = desc ? -1 : 1;
+      return arr.sort(function (a, b) {
+        var result = a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : 0;
+        return result * direction;
+      });
+    }
+    function getGroupedData(arr) {
+      var tempArr = _.clone(arr);
+      sortByKey(tempArr, 'distance');
+      _.each(tempArr, function (loc) {
+        var distance = _.find([500, 250, 100, 50, 20, 10, 5, 1], function (dist) {
+          return loc.distance >= dist;
+        });
+        loc.group = distance;
+      });
+      return _.groupBy(tempArr, 'group');
+    }
+    function getGroupKeys (obj) {
+      return _.map(_.keys(obj), function (item) {
+        return parseInt(item);
+      }).sort(function (a, b) {
+        return a - b;
+      });
+    }
+
+    $scope.$watch('searchPoint', function (point) {
+      if (point) {
+        _.each($scope.data, function (loc) {
+          var dist = google.maps.geometry.spherical.computeDistanceBetween(
+            $scope.searchPoint,
+            new google.maps.LatLng(loc.lat, loc.lng)
+          );
+          dist *= 0.000621371; //convert meters to miles
+          loc.distance = parseFloat(dist.toFixed());
+        });
+        $scope.groupedData = getGroupedData($scope.data);
+        $scope.groupKeys = getGroupKeys($scope.groupedData);
+        $scope.queryAddress = $scope.searchAddress;
+      }
+    });
+
     locationService.init(function (data) {
       $scope.data = data;
       $scope.groupedData = data;
@@ -35,6 +77,7 @@ app.controller('mainCtrl', ['$scope', 'locationService',
 app.directive('map', function () {
   return {
     restrict: 'E',
+    replace: true,
     template: '<div class="map-wrapper">' +
       '<div class="map" id="map-canvas"></div>' +
     '</div>',
@@ -126,6 +169,7 @@ app.directive('map', function () {
 app.directive('locationSearch', function () {
   return {
     restrict: 'E',
+    replace: true,
     template: '<div class="search-bar-wrapper">' +
       '<form id="location-search" ng-submit="locationSearch()">' +
         '<a href="#" class="search-bar-icon"><i class="icon-search"></i></a>' +
@@ -133,42 +177,6 @@ app.directive('locationSearch', function () {
       '</form>' +
     '</div>',
     link: function (scope, el) {
-      function calcDistances(searchPoint) {
-        _.each(scope.data, function (loc) {
-          var dist = google.maps.geometry.spherical.computeDistanceBetween(
-            searchPoint,
-            new google.maps.LatLng(loc.lat, loc.lng)
-          );
-          dist *= 0.000621371; //convert meters to miles
-          loc.distance = parseFloat(dist.toFixed());
-        });
-      }
-      function sortByKey(arr, key, desc) {
-        var direction = desc ? -1 : 1;
-        return arr.sort(function (a, b) {
-          var result = a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : 0;
-          return result * direction;
-        });
-      }
-      function getGroupedData(arr) {
-        var tempArr = _.clone(arr);
-        sortByKey(tempArr, 'distance');
-        _.each(tempArr, function (loc) {
-          var distance = _.find([500, 250, 100, 50, 20, 10, 5, 1], function (dist) {
-            return loc.distance >= dist;
-          });
-          loc.group = distance;
-        });
-        return _.groupBy(tempArr, 'group');
-      }
-      function getGroupKeys (obj) {
-        return _.map(_.keys(obj), function (item) {
-          return parseInt(item);
-        }).sort(function (a, b) {
-          return a - b;
-        });
-      }
-
       scope.locationSearch = function () {
         var geocoder = new google.maps.Geocoder();
         geocoder.geocode({'address': scope.searchAddress}, function (results, status) {
@@ -176,10 +184,7 @@ app.directive('locationSearch', function () {
           if (results.length) {
             result = results[0].geometry;
             scope.map.fitBounds(result.bounds);
-            calcDistances(result.location);
-            scope.groupedData = getGroupedData(scope.data);
-            scope.groupKeys = getGroupKeys(scope.groupedData);
-            scope.queryAddress = scope.searchAddress;
+            scope.searchPoint = result.location;
             scope.$apply();
           }
         });
@@ -191,6 +196,8 @@ app.directive('locationSearch', function () {
 app.directive('list', function () {
   return {
     restrict: 'E', 
+    transclude: true,
+    replace: true,
     templateUrl: 'list.html',
     link: function (scope) {
       scope.isArray = _.isArray;
@@ -211,13 +218,6 @@ app.directive('list', function () {
         scope.groupedData = scope.data;
       };
     }
-  };
-});
-
-app.filter('orderByKeys', function () {
-  return function (items) {
-    console.log('ordering by keys', items);
-    return items;
   };
 });
 

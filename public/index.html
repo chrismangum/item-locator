@@ -18,7 +18,13 @@
   </div>
   <div class="content">
     <div class="sidebar-wrapper">
-      <list search-address="searchAddress"></list>
+      <list>
+        <div class="listing-info">
+          <div class="info-name">{{item.name}}</div>
+          <div class="info-address1">{{item.address}}</div>
+          <div class="info-address2">{{item.city}}, {{item.state}} {{item.zip}}</div>
+        </div>
+      </list>
     </div>
     <map></map>
   </div>

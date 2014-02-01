@@ -13,23 +13,11 @@
     <div ng-if="!isArray(groupedData)">
       <div ng-repeat="key in groupKeys" class="sidebar-grouping">
         <div class="label label-miles">{{key + groupLabel}}</div>
-        <a ng-repeat="item in groupedData[key] | filter:{name: searchName}" ng-click="activateItem(item.index)" class="sidebar-listing">
-          <div class="listing-info">
-            <div class="info-name">{{item.name}}</div>
-            <div class="info-address1">{{item.address}}</div>
-            <div class="info-address2">{{item.city}}, {{item.state}} {{item.zip}}</div>
-          </div>
-        </a>
+        <a ng-repeat="item in groupedData[key] | filter:{name: searchName}" ng-click="activateItem(item.index)" class="sidebar-listing" ng-transclude></a>
       </div>
     </div>
     <div ng-if="isArray(groupedData)">
-      <a ng-repeat="item in groupedData | filter:{name: searchName}" ng-click="activateItem(item.index)" class="sidebar-listing">
-        <div class="listing-info">
-          <div class="info-name">{{item.name}}</div>
-          <div class="info-address1">{{item.address}}</div>
-          <div class="info-address2">{{item.city}}, {{item.state}} {{item.zip}}</div>
-        </div>
-      </a>
+      <a ng-repeat="item in groupedData | filter:{name: searchName}" ng-click="activateItem(item.index)" class="sidebar-listing" ng-transclude></a>
     </div>
   </div>
 </div>
