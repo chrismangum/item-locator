@@ -95,6 +95,7 @@ app.directive('map', function () {
           markers[i] = marker;
         });
       }
+
       scope.$watch('activeItem', function (item) {
         if (item) {
           if (!pinClick) {
@@ -104,6 +105,7 @@ app.directive('map', function () {
           infoWindow.open(scope.map, markers[item.index]);
         }
       });
+
       scope.$watch('data', function (newData, oldData) {
         plotShops();
         //data is only null at page load, so fit map bounds:
@@ -115,51 +117,52 @@ app.directive('map', function () {
   }
 });
 
-app.directive('locationSearch', ['$rootScope',
-  function ($rootScope) {
-    return {
-      restrict: 'E',
-      template: '<div class="search-bar-wrapper">' +
-        '<form id="location-search" ng-submit="locationSearch()">' +
-          '<a href="#" class="search-bar-icon"><i class="icon-search"></i></a>' +
-          '<input ng-model="searchAddress" autofocus placeholder="City, ST" type="text">' +
-        '</form>' +
-      '</div>',
-      link: function (scope, el) {
-        function calcDistances(searchPoint) {
-          _.each(scope.data, function (loc) {
-            var dist = google.maps.geometry.spherical.computeDistanceBetween(
-              searchPoint,
-              new google.maps.LatLng(loc.lat, loc.lng)
-            );
-            dist *= 0.000621371; //convert meters to miles
-            loc.distance = parseFloat(dist.toFixed());
-          });
-        }
-
-        scope.locationSearch = function () {
-          var geocoder = new google.maps.Geocoder();
-          geocoder.geocode({'address': scope.searchAddress}, function (results, status) {
-            var lat, lng, result;
-            if (results.length) {
-              result = results[0].geometry;
-              scope.map.fitBounds(result.bounds);
-              calcDistances(result.location);
-              $rootScope.$broadcast('search');
-            }
-          });
-        };
+app.directive('locationSearch', function () {
+  return {
+    restrict: 'E',
+    template: '<div class="search-bar-wrapper">' +
+      '<form id="location-search" ng-submit="locationSearch()">' +
+        '<a href="#" class="search-bar-icon"><i class="icon-search"></i></a>' +
+        '<input ng-model="searchAddress" autofocus placeholder="City, ST" type="text">' +
+      '</form>' +
+    '</div>',
+    link: function (scope, el) {
+      function calcDistances(searchPoint) {
+        _.each(scope.data, function (loc) {
+          var dist = google.maps.geometry.spherical.computeDistanceBetween(
+            searchPoint,
+            new google.maps.LatLng(loc.lat, loc.lng)
+          );
+          dist *= 0.000621371; //convert meters to miles
+          loc.distance = parseFloat(dist.toFixed());
+        });
       }
+
+      scope.locationSearch = function () {
+        var geocoder = new google.maps.Geocoder();
+        geocoder.geocode({'address': scope.searchAddress}, function (results, status) {
+          var lat, lng, result;
+          if (results.length) {
+            result = results[0].geometry;
+            scope.map.fitBounds(result.bounds);
+            calcDistances(result.location);
+            //regroup the data object instead of this:
+            scope.searchMode = true;
+            scope.sortField = 'distance';
+            scope.queryAddress = scope.searchAddress;
+            scope.$apply();
+          }
+        });
+      };
     }
   }
-]);
+});
 
 app.directive('list', ['$sce', function ($sce) {
   return {
     restrict: 'E', 
     templateUrl: 'list.html',
     link: function (scope) {
-
       scope.$watch('activeItem', function (newItem, oldItem) {
         if (oldItem !== newItem) {
           if (oldItem) {
@@ -169,13 +172,6 @@ app.directive('list', ['$sce', function ($sce) {
             newItem.name += '*';
           }
         }
-      });
-
-      scope.$on('search', function () {
-        scope.searchMode = true;
-        scope.sortField = 'distance';
-        scope.queryAddress = scope.searchAddress;
-        scope.$apply();
       });
 
       scope.exitSearch = function () {
