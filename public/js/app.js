@@ -147,21 +147,6 @@ app.directive('locationSearch', ['$rootScope', 'googleMap',
   }
 ]);
 
-app.factory('googleMap', function () {
-  return {
-    initialized: false,
-    init: function () {
-      if (!this.initialized) {
-        this.infoWindow = new google.maps.InfoWindow();
-        this.map = new google.maps.Map(document.getElementById('map-canvas'), {
-          zoom: 5,
-          center: new google.maps.LatLng(39.8282, -98.5795),
-        });
-      }
-    }
-  }
-});
-
 app.directive('list', ['$sce', function ($sce) {
   return {
     restrict: 'E', 
@@ -205,6 +190,21 @@ app.directive('list', ['$sce', function ($sce) {
     }
   };
 }]);
+
+app.factory('googleMap', function () {
+  return {
+    initialized: false,
+    init: function () {
+      if (!this.initialized) {
+        this.infoWindow = new google.maps.InfoWindow();
+        this.map = new google.maps.Map(document.getElementById('map-canvas'), {
+          zoom: 5,
+          center: new google.maps.LatLng(39.8282, -98.5795),
+        });
+      }
+    }
+  }
+});
 
 app.factory('locationService', ['$httpBackend',
   function ($httpBackend) {
