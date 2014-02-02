@@ -87,15 +87,15 @@ app.directive('list', ['$filter', '$sce', function ($filter, $sce) {
     transclude: true,
     scope: {
       groupLabel: '=',
-      data: '=',
+      data: '&',
       filteredData: '=',
-      sortField: '=',
-      activeItem: '='
+      sortField: '&',
+      activeItem: '&'
     },
     replace: true,
     templateUrl: 'list.html',
     link: function (scope) {
-      scope.$watch('activeItem', function (newItem, oldItem) {
+      scope.$watch(function () { return scope.activeItem(); }, function (newItem, oldItem) {
         if (oldItem !== newItem) {
           if (oldItem) {
             oldItem.name = oldItem.name.replace('*', '');
@@ -109,9 +109,9 @@ app.directive('list', ['$filter', '$sce', function ($filter, $sce) {
       scope.$watch('searchValue', function (newVal, oldVal) {
         if (newVal !== oldVal) {
           if (newVal) {
-            scope.filteredData = $filter('filter')(scope.data, {name: newVal});
+            scope.filteredData = $filter('filter')(scope.data(), {name: newVal});
           } else {
-            scope.filteredData = scope.data;
+            scope.filteredData = scope.data();
           }
         }
       });
@@ -140,8 +140,8 @@ app.directive('map', ['$compile', function ($compile) {
     restrict: 'E',
     replace: true,
     scope: {
-      map: '=',
-      filteredData: '=',
+      map: '&',
+      filteredData: '&',
       activeItem: '='
     },
     template: '<div class="map-wrapper">' +
@@ -152,6 +152,8 @@ app.directive('map', ['$compile', function ($compile) {
         markers = [],
         infoWindow = new google.maps.InfoWindow(),
         infoWindowTemplate = $compile('<info-window></info-window>')(scope);
+        
+      scope.map = scope.map();
 
       google.maps.event.addListener(infoWindow, 'closeclick', function () {
         scope.$emit('deactivateItem');
@@ -166,7 +168,7 @@ app.directive('map', ['$compile', function ($compile) {
       }
 
       function plotShops() {
-        _.each(scope.filteredData, function (loc, i) {
+        _.each(scope.filteredData(), function (loc, i) {
           var marker = new google.maps.Marker({
             map: scope.map,
             position: new google.maps.LatLng(loc.lat, loc.lng),
@@ -185,7 +187,7 @@ app.directive('map', ['$compile', function ($compile) {
         _.each(markers, function (item) {
           item.setVisible(false);
         });
-        _.each(scope.filteredData, function (item) {
+        _.each(scope.filteredData(), function (item) {
           markers[item.index].setVisible(true);
         });
       }
@@ -203,7 +205,7 @@ app.directive('map', ['$compile', function ($compile) {
         infoWindow.setContent(infoWindowTemplate[0].innerHTML);
       });
 
-      scope.$watch('filteredData', function (newData, oldData) {
+      scope.$watch(function () { return scope.filteredData(); }, function (newData, oldData) {
         if (newData) {
           if (oldData === null) {
             plotShops();
