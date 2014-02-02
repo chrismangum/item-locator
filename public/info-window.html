@@ -1,17 +1,17 @@
 <div class="info-window">
   <div class="basic-info">
   <div class="info-name">
-    <a ng-if="activeItem.website" target="_blank" ng-href="{{activeItem.website}}">{{activeItem.name}}</a>
-    <span ng-if="!activeItem.website">{{activeItem.name}}</span>
+    <a ng-if="activeItem().website" target="_blank" ng-href="{{activeItem().website}}">{{activeItem().name}}</a>
+    <span ng-if="!activeItem().website">{{activeItem().name}}</span>
   </div>
-  <div class="info-address1">{{activeItem.address}}</div>
-    <div class="info-address2">{{activeItem.city}} {{activeItem.state}} {{activeItem.zip}}</div>
+  <div class="info-address1">{{activeItem().address}}</div>
+    <div class="info-address2">{{activeItem().city}} {{activeItem().state}} {{activeItem().zip}}</div>
   </div>
   <div class="row-fluid more-info">
     <div class="span6">
       <div class="filter-info-wrapper">
         <div class="label">Phone</div>
-        <div class="filter-info">{{activeItem.phone}}</div>
+        <div class="filter-info">{{activeItem().phone}}</div>
       </div>
     </div>
   </div>

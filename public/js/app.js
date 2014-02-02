@@ -144,7 +144,7 @@ app.directive('map', ['$compile', function ($compile) {
     scope: {
       map: '&',
       data: '&',
-      activeItem: '='
+      activeItem: '&'
     },
     template: '<div class="map-wrapper">' +
       '<div class="map" id="map-canvas"></div>' +
@@ -194,7 +194,9 @@ app.directive('map', ['$compile', function ($compile) {
         });
       }
 
-      scope.$watch('activeItem', function (item) {
+      scope.$watch(function () {
+        return scope.activeItem();
+      }, function (item) {
         if (item) {
           if (!pinClick) {
             scope.map.setCenter(markers[item.index].position);
