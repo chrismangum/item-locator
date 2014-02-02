@@ -144,13 +144,13 @@ app.directive('map', ['$compile', function ($compile) {
     template: '<div class="map-wrapper">' +
       '<div class="map" id="map-canvas"></div>' +
     '</div>',
-    link: function (scope) {
+    link: function (scope, el) {
       var pinClick,
         markers = [],
         infoWindow = new google.maps.InfoWindow(),
         infoWindowTemplate = $compile('<info-window></info-window>')(scope);
 
-      scope.map = new google.maps.Map(document.getElementById('map-canvas'), {
+      scope.map = new google.maps.Map(el.find('#map-canvas')[0], {
         zoom: 5,
         center: new google.maps.LatLng(39.8282, -98.5795),
       });
