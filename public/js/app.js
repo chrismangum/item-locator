@@ -95,7 +95,9 @@ app.directive('list', ['$filter', '$sce', function ($filter, $sce) {
     replace: true,
     templateUrl: 'list.html',
     link: function (scope) {
-      scope.$watch(function () { return scope.activeItem(); }, function (newItem, oldItem) {
+      scope.$watch(function () {
+        return scope.activeItem();
+      }, function (newItem, oldItem) {
         if (oldItem !== newItem) {
           if (oldItem) {
             oldItem.name = oldItem.name.replace('*', '');
@@ -205,7 +207,9 @@ app.directive('map', ['$compile', function ($compile) {
         infoWindow.setContent(infoWindowTemplate[0].innerHTML);
       });
 
-      scope.$watch(function () { return scope.filteredData(); }, function (newData, oldData) {
+      scope.$watch(function () {
+        return scope.filteredData();
+      }, function (newData, oldData) {
         if (newData) {
           if (oldData === null) {
             plotShops();
