@@ -1,6 +1,6 @@
 item_locator
 ============
 
-Interactive JavaScript / jQuery map application.
+Item list / map application written in AngularJS.
 
 Designed by Jon Milner: http://www.jonmilner.com/
