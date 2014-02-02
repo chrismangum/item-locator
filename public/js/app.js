@@ -21,6 +21,10 @@ app.controller('mainCtrl', ['$scope', '$httpBackend',
       $scope.activateItemCallback();
     });
 
+    $scope.$on('activateItemCallback', function (e, callback) {
+      $scope.activateItemCallback = callback;
+    });
+
     $scope.$on('deactivateItem', function (e, index) {
       $scope.activeItem = null;
       $scope.$apply();
@@ -48,10 +52,6 @@ app.controller('mainCtrl', ['$scope', '$httpBackend',
       $scope.sortField = 'distance';
       $scope.groupLabel = 'Distance from "' + result.formatted_address + '"';
       $scope.$apply();
-    });
-
-    $scope.$on('activateItemCallback', function (e, callback) {
-      $scope.activateItemCallback = callback;
     });
 
     $httpBackend('GET', 'clients.json', null, function (status, data) {
@@ -213,6 +213,7 @@ app.directive('map', ['$compile', function ($compile) {
         return scope.data();
       }, function (newData, oldData) {
         if (newData) {
+          //when data first loads:
           if (oldData === null) {
             plotShops();
             fitMapBounds();
