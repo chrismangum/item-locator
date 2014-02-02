@@ -10,9 +10,9 @@
     <a class="label-close" href="#"><i class="icon-cancel-circle" ng-click="unGroup()"></i></a>
   </div>
   <div class="sidebar-listings">
-    <div ng-repeat="group in filteredData">
-      <div ng-if="group.name" class="label label-miles">{{group.name}}</div>
-      <a ng-repeat="item in group.data" activate-item="{{item.index}}" class="sidebar-listing" ng-transclude></a>
+    <div ng-repeat="item in (sortedData = (filteredData | orderBy:sortField))">
+      <div ng-if="groupLabel" ng-bind-html="getLabel(sortedData, $index)"></div>
+      <a activate-item="{{item.index}}" class="sidebar-listing" ng-transclude></a>
     </div>
   </div>
 </div>

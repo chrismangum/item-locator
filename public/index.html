@@ -18,7 +18,7 @@
   </div>
   <div class="content">
     <div class="sidebar-wrapper">
-      <list filtered-data="filteredData" group-label="groupLabel" data="data" active-item="activeItem">
+      <list filtered-data="filteredData" group-label="groupLabel" data="data" active-item="activeItem" sort-field="sortField">
         <div class="listing-info">
           <div class="info-name">{{item.name}}</div>
           <div class="info-address1">{{item.address}}</div>
@@ -26,12 +26,12 @@
         </div>
       </list>
     </div>
-    <map></map>
+    <map map="map" filtered-data="filteredData" active-item="activeItem"></map>
   </div>
   <script src="http://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=false"></script>
   <script src="/vendor/jquery/jquery.min.js"></script>
   <script src="/vendor/underscore/underscore.js"></script>
-  <script src="/vendor/angular/angular.min.js"></script>
+  <script src="/vendor/angular/angular.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

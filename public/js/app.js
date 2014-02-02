@@ -1,60 +1,62 @@
 
 var app = angular.module('app', []);
 
-app.controller('mainCtrl', ['$scope', '$httpBackend', '$filter', 'groupByDistance',
-  function ($scope, $httpBackend, $filter, groupByDistance) {
-    var pristineData = null;
-    $scope.queryAddress;
-
-    $scope.data = null;
-    $scope.filteredData = null;
-    $scope.clearGroups = function () {
-      $scope.data = [{
-        data: _.clone(pristineData)
-      }];
-    };
-
-    $scope.activeItem = null;
-
+app.controller('mainCtrl', ['$scope', '$httpBackend',
+  function ($scope, $httpBackend) {
     $scope.map = new google.maps.Map(document.getElementById('map-canvas'), {
       zoom: 5,
       center: new google.maps.LatLng(39.8282, -98.5795),
     });
 
-    $scope.deactivateItem = function () {
-      $scope.activeItem = null;
-    };
+    $scope.data = null;
+    $scope.filteredData = null;
+    $scope.sortField = 'name';
+    $scope.activeItem = null;
 
-    $scope.activateItem = function (index) {
-      $scope.activeItem = pristineData[index];
-      $scope.$apply();
-      $scope.activateItemCallback();
-    };
     $scope.activateItemCallback = function () {};
 
     $scope.$on('activateItem', function (e, index) {
-      $scope.activateItem(index);
+      $scope.activeItem = $scope.data[index];
+      $scope.$apply();
+      $scope.activateItemCallback();
     });
 
-    $scope.$on('ungroup', function () {
-      $scope.groupLabel = '';
-      $scope.clearGroups();
-      $scope.filteredData = $scope.data;
+    $scope.$on('deactivateItem', function (e, index) {
+      $scope.activeItem = null;
+      $scope.$apply();
     });
+
+    $scope.$on('unGroup', function () {
+      $scope.sortField = 'name';
+    });
+
+    function calcDistances(searchPoint) {
+      _.each($scope.data, function (loc, i) {
+        var dist = google.maps.geometry.spherical.computeDistanceBetween(
+          searchPoint,
+          new google.maps.LatLng(loc.lat, loc.lng)
+        );
+        dist *= 0.000621371; //convert meters to miles
+        loc.distance = parseFloat(dist.toFixed());
+      });
+    }
 
     $scope.$on('searchResult', function (e, result) {
-      $scope.clearGroups();
       $scope.map.fitBounds(result.geometry.bounds);
-      $scope.data = groupByDistance($scope.data[0].data, result.geometry.location);
+      calcDistances(result.geometry.location);
       $scope.filteredData = $scope.data;
+      $scope.sortField = 'distance';
       $scope.groupLabel = 'Distance from "' + result.formatted_address + '"';
       $scope.$apply();
     });
 
+    $scope.$on('activateItemCallback', function (e, callback) {
+      $scope.activateItemCallback = callback;
+    });
+
     $httpBackend('GET', 'clients.json', null, function (status, data) {
       if (status === 200) {
-        pristineData = angular.fromJson(data);
-        $scope.clearGroups();
+        $scope.data = angular.fromJson(data);
         $scope.filteredData = $scope.data;
         $scope.$apply();
       } else {
@@ -79,7 +81,7 @@ app.directive('infoWindow', function () {
   }
 });
 
-app.directive('list', function ($filter) {
+app.directive('list', ['$filter', '$sce', function ($filter, $sce) {
   return {
     restrict: 'E', 
     transclude: true,
@@ -87,12 +89,12 @@ app.directive('list', function ($filter) {
       groupLabel: '=',
       data: '=',
       filteredData: '=',
+      sortField: '=',
       activeItem: '='
     },
     replace: true,
     templateUrl: 'list.html',
     link: function (scope) {
-
       scope.$watch('activeItem', function (newItem, oldItem) {
         if (oldItem !== newItem) {
           if (oldItem) {
@@ -107,17 +109,7 @@ app.directive('list', function ($filter) {
       scope.$watch('searchValue', function (newVal, oldVal) {
         if (newVal !== oldVal) {
           if (newVal) {
-            scope.filteredData = [];
-            _.each(scope.data, function (group) {
-              var results = $filter('filter')(group.data, {name: newVal});
-              if (results.length) {
-                results = {data: results};
-                if (group.name) {
-                  results.name = group.name;
-                }
-                scope.filteredData.push(results);
-              }
-            });
+            scope.filteredData = $filter('filter')(scope.data, {name: newVal});
           } else {
             scope.filteredData = scope.data;
           }
@@ -125,16 +117,33 @@ app.directive('list', function ($filter) {
       });
 
       scope.unGroup = function () {
-        scope.$emit('ungroup');
+        scope.groupLabel = '';
+        scope.$emit('unGroup');
+      };
+
+      scope.getLabel = function(locations, i) {
+        var string =  '',
+          distance = _.find([500, 250, 100, 50, 20, 10, 5, 1], function (dist) {
+          return (locations[i].distance >= dist && (i === 0 || locations[i - 1].distance < dist));
+        });
+        if (distance) {
+          string = '<div class="label label-miles">' + distance + '+ Miles</div>';
+        }
+        return $sce.trustAsHtml(string);
       };
     }
   };
-});
+}]);
 
 app.directive('map', ['$compile', function ($compile) {
   return {
     restrict: 'E',
     replace: true,
+    scope: {
+      map: '=',
+      filteredData: '=',
+      activeItem: '='
+    },
     template: '<div class="map-wrapper">' +
       '<div class="map" id="map-canvas"></div>' +
     '</div>',
@@ -145,8 +154,7 @@ app.directive('map', ['$compile', function ($compile) {
         infoWindowTemplate = $compile('<info-window></info-window>')(scope);
 
       google.maps.event.addListener(infoWindow, 'closeclick', function () {
-        scope.deactivateItem();
-        scope.$apply();
+        scope.$emit('deactivateItem');
       });
 
       function fitMapBounds() {
@@ -158,7 +166,7 @@ app.directive('map', ['$compile', function ($compile) {
       }
 
       function plotShops() {
-        _.each(scope.data[0].data, function (loc, i) {
+        _.each(scope.filteredData, function (loc, i) {
           var marker = new google.maps.Marker({
             map: scope.map,
             position: new google.maps.LatLng(loc.lat, loc.lng),
@@ -166,7 +174,7 @@ app.directive('map', ['$compile', function ($compile) {
           });
           google.maps.event.addListener(marker, 'click', function () {
             pinClick = true;
-            scope.activateItem(this.index);
+            scope.$emit('activateItem', this.index);
             pinClick = false;
           });
           markers[i] = marker;
@@ -174,13 +182,10 @@ app.directive('map', ['$compile', function ($compile) {
       }
 
       function filterMarkers() {
-        var items = _.flatten(_.map(scope.filteredData, function (item) {
-          return item.data;
-        }));
         _.each(markers, function (item) {
           item.setVisible(false);
         });
-        _.each(items, function (item) {
+        _.each(scope.filteredData, function (item) {
           markers[item.index].setVisible(true);
         });
       }
@@ -194,9 +199,9 @@ app.directive('map', ['$compile', function ($compile) {
         }
       });
 
-      scope.activateItemCallback = function() {
+      scope.$emit('activateItemCallback', function() {
         infoWindow.setContent(infoWindowTemplate[0].innerHTML);
-      };
+      });
 
       scope.$watch('filteredData', function (newData, oldData) {
         if (newData) {
@@ -234,62 +239,4 @@ app.directive('locationSearch', function () {
       };
     }
   }
-});
-
-
-app.factory('groupByDistance', function () {
-  function sortByKey(arr, key, desc) {
-    var direction = desc ? -1 : 1;
-    return arr.sort(function (a, b) {
-      var result = a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : 0;
-      return result * direction;
-    });
-  }
-
-  function calculateDistances(arr, point) {
-    _.each(arr, function (item) {
-      item.distance = calculateDistance(item, point);
-    });
-    sortByKey(arr, 'distance');
-    return arr;
-  }
-
-  function addGroups(arr) {
-    _.each(arr, function (loc) {
-      var distance = _.find([500, 250, 100, 50, 20, 10, 5, 1], function (dist) {
-        return loc.distance >= dist;
-      });
-      loc.group = distance + '+ Miles';
-    });
-    return arr;
-  }
-
-  function getGroupedData(arr) {
-    var data = {},
-    arr = addGroups(arr);
-    data = _.groupBy(arr, 'group');
-    return _.map(getSortedGroupKeys(data), function (key) {
-      return {
-        name: key,
-        data: data[key]
-      };
-    });
-  }
-  function getSortedGroupKeys(obj) {
-    return _.keys(obj).sort(function (a, b) {
-      return parseInt(a) - parseInt(b);
-    });
-  }
-
-  function calculateDistance(loc, point) {
-    var dist = google.maps.geometry.spherical.computeDistanceBetween(
-      point,
-      new google.maps.LatLng(loc.lat, loc.lng)
-    );
-    dist *= 0.000621371; //convert meters to miles
-    return parseFloat(dist.toFixed());
-  }
-  return function (data, searchPoint) {
-    return getGroupedData(calculateDistances(data, searchPoint));
-  };
 });
