@@ -1,8 +1,7 @@
-
 var app = angular.module('app', []);
 
-app.controller('mainCtrl', ['$scope', '$httpBackend',
-  function ($scope, $httpBackend) {
+app.controller('mainCtrl', ['$scope', '$http',
+  function ($scope, $http) {
     var geocoder = new google.maps.Geocoder();
 
     $scope.data = null;
@@ -31,7 +30,7 @@ app.controller('mainCtrl', ['$scope', '$httpBackend',
     });
 
     function calcDistances(searchPoint) {
-      _.each($scope.data, function (loc, i) {
+      _.each($scope.data, function (loc) {
         var dist = google.maps.geometry.spherical.computeDistanceBetween(
           searchPoint,
           new google.maps.LatLng(loc.lat, loc.lng)
@@ -55,21 +54,16 @@ app.controller('mainCtrl', ['$scope', '$httpBackend',
       });
     };
 
-    $httpBackend('GET', 'clients.json', null, function (status, data) {
-      if (status === 200) {
-        $scope.data = angular.fromJson(data);
-        $scope.filteredData = $scope.data;
-        $scope.$apply();
-      } else {
-        console.log('Problem getting data');
-      }
+    $http.get('clients.json').success(function (data) {
+      $scope.data = angular.fromJson(data);
+      $scope.filteredData = $scope.data;
     });
   }
 ]);
 
 app.directive('activateItem', function () {
   return function (scope, el, attrs) {
-    el.on('click', function() {
+    el.on('click', function () {
       scope.$emit('activateItem', attrs.activateItem);
     });
   }
@@ -124,7 +118,7 @@ app.directive('list', ['$filter', '$sce', function ($filter, $sce) {
         scope.$emit('unGroup');
       };
 
-      scope.getLabel = function(locations, i) {
+      scope.getLabel = function (locations, i) {
         var string =  '',
           distance = _.find([500, 250, 100, 50, 20, 10, 5, 1], function (dist) {
           return (locations[i].distance >= dist && (i === 0 || locations[i - 1].distance < dist));
@@ -150,7 +144,7 @@ app.directive('map', ['$compile', function ($compile) {
     template: '<div class="map-wrapper">' +
       '<div class="map" id="map-canvas"></div>' +
     '</div>',
-    link: function(scope, el) {
+    link: function (scope) {
       var pinClick,
         markers = [],
         infoWindow = new google.maps.InfoWindow(),
@@ -209,7 +203,7 @@ app.directive('map', ['$compile', function ($compile) {
         }
       });
 
-      scope.$emit('activateItemCallback', function() {
+      scope.$emit('activateItemCallback', function () {
         infoWindow.setContent(infoWindowTemplate[0].innerHTML);
       });
 
