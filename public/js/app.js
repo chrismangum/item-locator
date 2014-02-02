@@ -143,7 +143,7 @@ app.directive('map', ['$compile', function ($compile) {
     replace: true,
     scope: {
       map: '&',
-      filteredData: '&',
+      data: '&',
       activeItem: '='
     },
     template: '<div class="map-wrapper">' +
@@ -170,7 +170,7 @@ app.directive('map', ['$compile', function ($compile) {
       }
 
       function plotShops() {
-        _.each(scope.filteredData(), function (loc, i) {
+        _.each(scope.data(), function (loc, i) {
           var marker = new google.maps.Marker({
             map: scope.map,
             position: new google.maps.LatLng(loc.lat, loc.lng),
@@ -189,7 +189,7 @@ app.directive('map', ['$compile', function ($compile) {
         _.each(markers, function (item) {
           item.setVisible(false);
         });
-        _.each(scope.filteredData(), function (item) {
+        _.each(scope.data(), function (item) {
           markers[item.index].setVisible(true);
         });
       }
@@ -208,7 +208,7 @@ app.directive('map', ['$compile', function ($compile) {
       });
 
       scope.$watch(function () {
-        return scope.filteredData();
+        return scope.data();
       }, function (newData, oldData) {
         if (newData) {
           if (oldData === null) {
