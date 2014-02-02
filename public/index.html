@@ -11,7 +11,12 @@
   <div class="header">
     <div class="container">
       <a class="logo" href="#" onclick="window.location.reload(true);"><img src="images/logo.png"></a>
-      <location-search map="map" search-point="searchPoint"></location-search>
+      <div class="search-bar-wrapper">
+        <form id="location-search" ng-submit="locationSearch()">
+          <a href="#" class="search-bar-icon"><i class="icon-search"></i></a>
+          <input ng-model="searchAddress" autofocus placeholder="City, ST" type="text">
+        </form>
+      </div>
     </div>
   </div>
   <div class="filter-bar-wrapper">

@@ -3,16 +3,12 @@ var app = angular.module('app', []);
 
 app.controller('mainCtrl', ['$scope', '$httpBackend',
   function ($scope, $httpBackend) {
-    $scope.map = new google.maps.Map(document.getElementById('map-canvas'), {
-      zoom: 5,
-      center: new google.maps.LatLng(39.8282, -98.5795),
-    });
+    var geocoder = new google.maps.Geocoder();
 
     $scope.data = null;
     $scope.filteredData = null;
     $scope.sortField = 'name';
     $scope.activeItem = null;
-
     $scope.activateItemCallback = function () {};
 
     $scope.$on('activateItem', function (e, index) {
@@ -45,14 +41,19 @@ app.controller('mainCtrl', ['$scope', '$httpBackend',
       });
     }
 
-    $scope.$on('searchResult', function (e, result) {
-      $scope.map.fitBounds(result.geometry.bounds);
-      calcDistances(result.geometry.location);
-      $scope.filteredData = $scope.data;
-      $scope.sortField = 'distance';
-      $scope.groupLabel = 'Distance from "' + result.formatted_address + '"';
-      $scope.$apply();
-    });
+    $scope.locationSearch = function () {
+      geocoder.geocode({'address': $scope.searchAddress}, function (results, status) {
+        if (results.length) {
+          var result = results[0];
+          $scope.map.fitBounds(result.geometry.bounds);
+          calcDistances(result.geometry.location);
+          $scope.filteredData = $scope.data;
+          $scope.sortField = 'distance';
+          $scope.groupLabel = 'Distance from "' + result.formatted_address + '"';
+          $scope.$apply();
+        }
+      });
+    };
 
     $httpBackend('GET', 'clients.json', null, function (status, data) {
       if (status === 200) {
@@ -142,7 +143,7 @@ app.directive('map', ['$compile', function ($compile) {
     restrict: 'E',
     replace: true,
     scope: {
-      map: '&',
+      map: '=',
       data: '&',
       activeItem: '&'
     },
@@ -154,9 +155,12 @@ app.directive('map', ['$compile', function ($compile) {
         markers = [],
         infoWindow = new google.maps.InfoWindow(),
         infoWindowTemplate = $compile('<info-window></info-window>')(scope);
-        
-      scope.map = scope.map();
 
+      scope.map = new google.maps.Map(document.getElementById('map-canvas'), {
+        zoom: 5,
+        center: new google.maps.LatLng(39.8282, -98.5795),
+      });
+        
       google.maps.event.addListener(infoWindow, 'closeclick', function () {
         scope.$emit('deactivateItem');
       });
@@ -225,27 +229,3 @@ app.directive('map', ['$compile', function ($compile) {
     }
   }
 }]);
-
-app.directive('locationSearch', function () {
-  return {
-    restrict: 'E',
-    replace: true,
-    scope: {},
-    template: '<div class="search-bar-wrapper">' +
-      '<form id="location-search" ng-submit="locationSearch()">' +
-        '<a href="#" class="search-bar-icon"><i class="icon-search"></i></a>' +
-        '<input ng-model="searchAddress" autofocus placeholder="City, ST" type="text">' +
-      '</form>' +
-    '</div>',
-    link: function (scope, el) {
-      var geocoder = new google.maps.Geocoder();
-      scope.locationSearch = function () {
-        geocoder.geocode({'address': scope.searchAddress}, function (results, status) {
-          if (results.length) {
-            scope.$emit('searchResult', results[0]);
-          }
-        });
-      };
-    }
-  }
-});
