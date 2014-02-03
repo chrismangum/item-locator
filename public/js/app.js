@@ -20,7 +20,7 @@ app.controller('mainCtrl', ['$scope', '$http', '$sce',
       $scope.activateItemCallback = callback;
     });
 
-    $scope.$on('deactivateItem', function (e, index) {
+    $scope.$on('deactivateItem', function () {
       $scope.activeItem = null;
       $scope.$apply();
     });
