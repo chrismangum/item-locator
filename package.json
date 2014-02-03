@@ -17,7 +17,6 @@
   },
   "homepage": "https://github.com/mtdbass5/item_locator",
   "dependencies": {
-    "jade": "*",
     "grunt": "~0.4.2",
     "matchdep": "~0.3.0",
     "grunt-nodemon": "~0.1.2",
