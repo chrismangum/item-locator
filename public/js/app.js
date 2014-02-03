@@ -88,7 +88,7 @@ app.directive('infoWindow', function () {
   }
 });
 
-app.directive('list', ['$filter', '$sce', function ($filter, $sce) {
+app.directive('list', ['$filter', function ($filter) {
   return {
     restrict: 'E', 
     transclude: true,
