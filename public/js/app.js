@@ -1,7 +1,7 @@
 var app = angular.module('app', []);
 
-app.controller('mainCtrl', ['$scope', '$http',
-  function ($scope, $http) {
+app.controller('mainCtrl', ['$scope', '$http', '$sce',
+  function ($scope, $http, $sce) {
     var geocoder = new google.maps.Geocoder();
 
     $scope.data = null;
@@ -28,6 +28,18 @@ app.controller('mainCtrl', ['$scope', '$http',
     $scope.$on('unGroup', function () {
       $scope.sortField = 'name';
     });
+
+    $scope.getLabel = function (locations, i) {
+      console.log(locations);
+      var string =  '',
+        distance = _.find([500, 250, 100, 50, 20, 10, 5, 1], function (dist) {
+          return (locations[i].distance >= dist && (i === 0 || locations[i - 1].distance < dist));
+        });
+      if (distance) {
+        string = '<div class="label label-miles">' + distance + '+ Miles</div>';
+      }
+      return $sce.trustAsHtml(string);
+    };
 
     function calcDistances(searchPoint) {
       _.each($scope.data, function (loc) {
@@ -85,7 +97,8 @@ app.directive('list', ['$filter', '$sce', function ($filter, $sce) {
       data: '&',
       filteredData: '=',
       sortField: '&',
-      activeItem: '&'
+      activeItem: '&',
+      getLabel: '&'
     },
     replace: true,
     templateUrl: 'list.html',
@@ -116,17 +129,6 @@ app.directive('list', ['$filter', '$sce', function ($filter, $sce) {
       scope.unGroup = function () {
         scope.groupLabel = '';
         scope.$emit('unGroup');
-      };
-
-      scope.getLabel = function (locations, i) {
-        var string =  '',
-          distance = _.find([500, 250, 100, 50, 20, 10, 5, 1], function (dist) {
-          return (locations[i].distance >= dist && (i === 0 || locations[i - 1].distance < dist));
-        });
-        if (distance) {
-          string = '<div class="label label-miles">' + distance + '+ Miles</div>';
-        }
-        return $sce.trustAsHtml(string);
       };
     }
   };
