@@ -186,11 +186,9 @@ app.directive('map', ['$compile', function ($compile) {
       }
 
       function filterMarkers() {
-        _.each(markers, function (item) {
-          item.setVisible(false);
-        });
-        _.each(scope.data(), function (item) {
-          markers[item.index].setVisible(true);
+        var indexes = _.indexBy(scope.data(), 'index');
+        _.each(markers, function (item, i) {
+          item.setVisible(!!indexes[i]);
         });
       }
 
