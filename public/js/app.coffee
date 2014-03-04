@@ -30,7 +30,7 @@ app.controller 'mainCtrl', ['$scope', '$http', '$sce'
       distance = _.find [500, 250, 100, 50, 20, 10, 5, 1], (dist) ->
         locations[i].distance >= dist and (i == 0 or locations[i - 1].distance < dist)
       if distance
-        string = '<div class="label label-miles">' + distance + '+ Miles</div>'
+        string = "<div class='label label-miles'>#{distance}+ Miles</div>"
       $sce.trustAsHtml string
 
     calcDistances = (searchPoint) ->
@@ -47,7 +47,7 @@ app.controller 'mainCtrl', ['$scope', '$http', '$sce'
           calcDistances result.geometry.location
           $scope.filteredData = $scope.data
           $scope.sortField = 'distance'
-          $scope.groupLabel = 'Distance from "' + result.formatted_address + '"'
+          $scope.groupLabel = "Distance from \"#{result.formatted_address}\""
           $scope.$apply()
           
     $http.get('clients.json').then (response) ->
@@ -104,9 +104,9 @@ app.directive 'map', ['$compile', ($compile) ->
     map: '='
     data: '&'
     activeItem: '&'
-  template: '<div class="map-wrapper">' +
-    '<div class="map" id="map-canvas"></div>' +
-  '</div>'
+  template: '<div class="map-wrapper">
+    <div class="map" id="map-canvas"></div>
+  </div>'
   link: (scope, el) ->
     pinClick = false
     markers = []
