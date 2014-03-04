@@ -134,7 +134,7 @@ app.directive 'map', ['$compile', ($compile) ->
           index: i
         google.maps.event.addListener marker, 'click', () ->
           pinClick = true
-          scope.$emit 'activateItem', this.index
+          scope.$emit 'activateItem', @index
           pinClick = false
         markers[i] = marker
 
