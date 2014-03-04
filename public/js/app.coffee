@@ -33,7 +33,6 @@ app.controller 'mainCtrl', ['$scope', '$http', '$sce'
         string = '<div class="label label-miles">' + distance + '+ Miles</div>'
       $sce.trustAsHtml string
 
-
     calcDistances = (searchPoint) ->
       _.each $scope.data, (loc) ->
         dist = google.maps.geometry.spherical.computeDistanceBetween searchPoint, new google.maps.LatLng loc.lat, loc.lng
@@ -162,12 +161,3 @@ app.directive 'map', ['$compile', ($compile) ->
         else
           filterMarkers()
 ]
-
-
-
-
-
-
-
-
-
