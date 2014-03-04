@@ -11,6 +11,17 @@ module.exports = function(grunt) {
       css: {
         files: 'public/css/style.css',
         tasks: ['cssmin']
+      },
+      coffee: {
+        files: 'public/js/app.coffee',
+        tasks: ['coffee:compile']
+      }
+    },
+    coffee: {
+      compile: {
+        files: {
+          'public/js/app.js': 'public/js/app.coffee',
+        }
       }
     },
     cssmin: {
@@ -54,6 +65,6 @@ module.exports = function(grunt) {
     }
   });
   grunt.registerTask('default', ['compile', 'concurrent:default']);
-  grunt.registerTask('compile', ['cssmin:compress', 'uglify:minify']);
+  grunt.registerTask('compile', ['cssmin:compress', 'coffee:compile', 'uglify:minify']);
   grunt.registerTask('lint', ['jshint']);
 };
