@@ -4,10 +4,7 @@ app.controller 'mainCtrl', ['$scope', '$http', '$sce'
   ($scope, $http, $sce) ->
     geocoder = new google.maps.Geocoder()
 
-    $scope.data = null
-    $scope.filteredData = null
     $scope.sortField = 'name'
-    $scope.activeItem = null
     $scope.activateItemCallback = ->
 
     $scope.$on 'activateItem', (e, index) ->
@@ -155,7 +152,7 @@ app.directive 'map', ['$compile', ($compile) ->
     scope.$watch (() -> scope.data()), (newData, oldData) ->
       if newData
         #when data first loads:
-        if oldData == null
+        unless oldData
           plotShops()
           fitMapBounds()
         else
