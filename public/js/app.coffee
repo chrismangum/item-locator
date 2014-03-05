@@ -36,7 +36,7 @@ app.controller 'mainCtrl', ['$scope', '$http', '$sce'
         dist *= 0.000621371; #convert meters to miles
         loc.distance = parseFloat dist.toFixed()
 
-    $scope.locationSearch = () ->
+    $scope.locationSearch = ->
       geocoder.geocode 'address': $scope.searchAddress, (results, status) ->
         if results.length
           result = results[0]
@@ -53,12 +53,12 @@ app.controller 'mainCtrl', ['$scope', '$http', '$sce'
       $scope.filteredData = $scope.data
 ]
 
-app.directive 'activateItem', () ->
+app.directive 'activateItem', ->
   (scope, el, attrs) ->
-    el.on 'click', () ->
+    el.on 'click', ->
       scope.$emit 'activateItem', attrs.activateItem
 
-app.directive 'infoWindow', () ->
+app.directive 'infoWindow', ->
   restrict: 'E'
   templateUrl: 'info-window.html'
 
@@ -75,7 +75,7 @@ app.directive 'list', ['$filter', ($filter) ->
   replace: true
   templateUrl: 'list.html'
   link: (scope) ->
-    scope.$watch (() -> scope.activeItem()), (newItem, oldItem) ->
+    scope.$watch (-> scope.activeItem()), (newItem, oldItem) ->
       if oldItem isnt newItem
         if oldItem
           oldItem.name = oldItem.name.replace '*', ''
@@ -89,7 +89,7 @@ app.directive 'list', ['$filter', ($filter) ->
         else
           scope.filteredData = scope.data()
 
-    scope.unGroup = () ->
+    scope.unGroup = ->
       scope.groupLabel = ''
       scope.$emit 'unGroup'
 ]
@@ -114,7 +114,7 @@ app.directive 'map', ['$compile', ($compile) ->
       zoom: 5
       center: new google.maps.LatLng 39.8282, -98.5795
       
-    google.maps.event.addListener infoWindow, 'closeclick', () ->
+    google.maps.event.addListener infoWindow, 'closeclick', ->
       scope.$emit 'deactivateItem'
 
     fitMapBounds = (markers) ->
@@ -140,16 +140,16 @@ app.directive 'map', ['$compile', ($compile) ->
       _.each markers, (item, i) ->
         item.setVisible i of indexes
 
-    scope.$watch (() -> scope.activeItem()), (item) ->
+    scope.$watch (-> scope.activeItem()), (item) ->
       if item
         unless pinClick
           scope.map.setCenter markers[item.index].position
         infoWindow.open scope.map, markers[item.index]
 
-    scope.$emit 'activateItemCallback', () ->
+    scope.$emit 'activateItemCallback', ->
       infoWindow.setContent infoWindowTemplate[0].innerHTML
 
-    scope.$watch (() -> scope.data()), (newData, oldData) ->
+    scope.$watch (-> scope.data()), (newData, oldData) ->
       if newData
         if oldData
           filterMarkers newData, markers
