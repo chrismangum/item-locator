@@ -24,14 +24,15 @@ app.controller 'mainCtrl', ['$scope', '$http', '$sce'
 
     $scope.getLabel = (locations, i) ->
       distance = _.find [500, 250, 100, 50, 20, 10, 5, 1], (dist) ->
-        locations[i].distance >= dist and (i == 0 or locations[i - 1].distance < dist)
+        locations[i].distance >= dist and (i is 0 or locations[i - 1].distance < dist)
       if distance
         string = "<div class='label label-miles'>#{distance}+ Miles</div>"
       $sce.trustAsHtml string
 
+    calcDistance = google.maps.geometry.spherical.computeDistanceBetween
     calcDistances = (searchPoint) ->
       _.each $scope.data, (loc) ->
-        dist = google.maps.geometry.spherical.computeDistanceBetween searchPoint, new google.maps.LatLng loc.lat, loc.lng
+        dist = calcDistance searchPoint, new google.maps.LatLng loc.lat, loc.lng
         dist *= 0.000621371; #convert meters to miles
         loc.distance = parseFloat dist.toFixed()
 
@@ -75,14 +76,14 @@ app.directive 'list', ['$filter', ($filter) ->
   templateUrl: 'list.html'
   link: (scope) ->
     scope.$watch (() -> scope.activeItem()), (newItem, oldItem) ->
-      if oldItem != newItem
+      if oldItem isnt newItem
         if oldItem
           oldItem.name = oldItem.name.replace '*', ''
         if newItem
           newItem.name += '*'
 
     scope.$watch 'searchValue', (newVal, oldVal) ->
-      if newVal != oldVal
+      if newVal isnt oldVal
         if newVal
           scope.filteredData = $filter('filter') scope.data(), name: newVal
         else
@@ -116,28 +117,28 @@ app.directive 'map', ['$compile', ($compile) ->
     google.maps.event.addListener infoWindow, 'closeclick', () ->
       scope.$emit 'deactivateItem'
 
-    fitMapBounds = () ->
+    fitMapBounds = (markers) ->
       bounds = new google.maps.LatLngBounds()
       _.each markers, (marker) ->
         bounds.extend marker.position
       scope.map.fitBounds bounds
 
-    plotShops = () ->
-      _.each scope.data(), (loc, i) ->
+    genMarkers = (data) ->
+      _.map data, (loc, i) ->
         marker = new google.maps.Marker
           map: scope.map
-          position: new google.maps.LatLng(loc.lat, loc.lng)
+          position: new google.maps.LatLng loc.lat, loc.lng
           index: i
         google.maps.event.addListener marker, 'click', () ->
           pinClick = true
           scope.$emit 'activateItem', @index
           pinClick = false
-        markers[i] = marker
+        marker
 
-    filterMarkers = () ->
-      indexes = _.indexBy scope.data(), 'index'
+    filterMarkers = (data, markers) ->
+      indexes = _.indexBy data, 'index'
       _.each markers, (item, i) ->
-        item.setVisible !!indexes[i]
+        item.setVisible i of indexes
 
     scope.$watch (() -> scope.activeItem()), (item) ->
       if item
@@ -151,8 +152,8 @@ app.directive 'map', ['$compile', ($compile) ->
     scope.$watch (() -> scope.data()), (newData, oldData) ->
       if newData
         if oldData
-          filterMarkers()
+          filterMarkers newData, markers
         else
-          plotShops()
-          fitMapBounds()
+          markers = genMarkers newData
+          fitMapBounds markers
 ]
