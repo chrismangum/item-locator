@@ -23,7 +23,6 @@ app.controller 'mainCtrl', ['$scope', '$http', '$sce'
       $scope.sortField = 'name'
 
     $scope.getLabel = (locations, i) ->
-      string =  ''
       distance = _.find [500, 250, 100, 50, 20, 10, 5, 1], (dist) ->
         locations[i].distance >= dist and (i == 0 or locations[i - 1].distance < dist)
       if distance
@@ -151,10 +150,9 @@ app.directive 'map', ['$compile', ($compile) ->
 
     scope.$watch (() -> scope.data()), (newData, oldData) ->
       if newData
-        #when data first loads:
-        unless oldData
+        if oldData
+          filterMarkers()
+        else
           plotShops()
           fitMapBounds()
-        else
-          filterMarkers()
 ]
