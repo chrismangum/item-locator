@@ -1,7 +1,7 @@
 app = angular.module 'app', []
 
-app.controller 'mainCtrl', ['$scope', '$http', '$sce'
-  ($scope, $http, $sce) ->
+app.controller 'mainCtrl', ['$scope', '$http', '$sce', '$map'
+  ($scope, $http, $sce, $map) ->
     geocoder = new google.maps.Geocoder()
 
     $scope.sortField = 'name'
@@ -29,10 +29,9 @@ app.controller 'mainCtrl', ['$scope', '$http', '$sce'
         string = "<div class='label label-miles'>#{distance}+ Miles</div>"
       $sce.trustAsHtml string
 
-    calcDistance = google.maps.geometry.spherical.computeDistanceBetween
     calcDistances = (searchPoint) ->
       _.each $scope.data, (loc) ->
-        dist = calcDistance searchPoint, new google.maps.LatLng loc.lat, loc.lng
+        dist = $map.calcDistance searchPoint, $map.genLatLng loc.lat, loc.lng
         dist *= 0.000621371; #convert meters to miles
         loc.distance = parseFloat dist.toFixed()
 
@@ -40,7 +39,7 @@ app.controller 'mainCtrl', ['$scope', '$http', '$sce'
       geocoder.geocode 'address': $scope.searchAddress, (results, status) ->
         if results.length
           result = results[0]
-          $scope.map.fitBounds result.geometry.bounds
+          $map.fit result.geometry.bounds
           calcDistances result.geometry.location
           $scope.filteredData = $scope.data
           $scope.sortField = 'distance'
@@ -94,11 +93,10 @@ app.directive 'list', ['$filter', ($filter) ->
       scope.$emit 'unGroup'
 ]
 
-app.directive 'map', ['$compile', ($compile) ->
+app.directive 'map', ['$compile', '$map', ($compile, $map) ->
   restrict: 'E'
   replace: true
   scope:
-    map: '='
     data: '&'
     activeItem: '&'
   template: '<div class="map-wrapper">
@@ -110,50 +108,65 @@ app.directive 'map', ['$compile', ($compile) ->
     infoWindow = new google.maps.InfoWindow()
     infoWindowTemplate = $compile('<info-window></info-window>') scope
 
-    scope.map = new google.maps.Map el.find('#map-canvas')[0],
-      zoom: 5
-      center: new google.maps.LatLng 39.8282, -98.5795
+    $map.init '#map-canvas'
       
     google.maps.event.addListener infoWindow, 'closeclick', ->
       scope.$emit 'deactivateItem'
 
-    fitMapBounds = (markers) ->
-      bounds = new google.maps.LatLngBounds()
-      _.each markers, (marker) ->
-        bounds.extend marker.position
-      scope.map.fitBounds bounds
-
-    genMarkers = (data) ->
-      _.map data, (loc, i) ->
-        marker = new google.maps.Marker
-          map: scope.map
-          position: new google.maps.LatLng loc.lat, loc.lng
-          index: i
-        google.maps.event.addListener marker, 'click', () ->
-          pinClick = true
-          scope.$emit 'activateItem', @index
-          pinClick = false
-        marker
-
-    filterMarkers = (data, markers) ->
-      indexes = _.indexBy data, 'index'
-      _.each markers, (item, i) ->
-        item.setVisible i of indexes
-
     scope.$watch (-> scope.activeItem()), (item) ->
       if item
         unless pinClick
-          scope.map.setCenter markers[item.index].position
-        infoWindow.open scope.map, markers[item.index]
+          $map.center $map.markers[item.index].position
+        infoWindow.open $map.map, $map.markers[item.index]
 
     scope.$emit 'activateItemCallback', ->
       infoWindow.setContent infoWindowTemplate[0].innerHTML
 
+    filterMarkers = (data) ->
+      indexes = _.indexBy data, 'index'
+      _.each $map.markers, (item, i) ->
+        item.setVisible i of indexes
+
     scope.$watch (-> scope.data()), (newData, oldData) ->
       if newData
         if oldData
-          filterMarkers newData, markers
+          filterMarkers newData
         else
-          markers = genMarkers newData
-          fitMapBounds markers
+          $map.genMarkers newData, ->
+            pinClick = true
+            scope.$emit 'activateItem', @index
+            pinClick = false
 ]
+
+app.factory '$map', ->
+
+  genMarkerBounds = (markers) ->
+    bounds = new google.maps.LatLngBounds()
+    _.each markers, (marker) ->
+      bounds.extend marker.position
+    bounds
+
+  genLatLng = (lat, lng) ->
+    new google.maps.LatLng lat, lng
+
+  calcDistance: (start, end) ->
+    google.maps.geometry.spherical.computeDistanceBetween start, end
+  center: (point) ->
+    @map.setCenter point
+  fit: (bounds) ->
+    @map.fitBounds bounds
+  genLatLng: genLatLng
+  genMarkers: (data, eventHandler) ->
+    map = @map
+    @markers = _.map data, (loc, i) ->
+      marker = new google.maps.Marker
+        map: map
+        position: genLatLng loc.lat, loc.lng
+        index: i
+      google.maps.event.addListener marker, 'click', eventHandler
+      marker
+    @fit genMarkerBounds @markers
+  init: (selector) ->
+    @map = new google.maps.Map $(selector)[0],
+      zoom: 5
+      center: genLatLng 39.8282, -98.5795
