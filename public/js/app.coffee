@@ -151,11 +151,15 @@ app.factory '$map', ->
 
   calcDistance: (start, end) ->
     google.maps.geometry.spherical.computeDistanceBetween start, end
+
   center: (point) ->
     @map.setCenter point
+
   fit: (bounds) ->
     @map.fitBounds bounds
+
   genLatLng: genLatLng
+
   genMarkers: (data, eventHandler) ->
     map = @map
     @markers = _.map data, (loc, i) ->
@@ -166,6 +170,7 @@ app.factory '$map', ->
       google.maps.event.addListener marker, 'click', eventHandler
       marker
     @fit genMarkerBounds @markers
+
   init: (selector) ->
     @map = new google.maps.Map $(selector)[0],
       zoom: 5
