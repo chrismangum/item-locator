@@ -60,7 +60,7 @@ app.directive 'list', ['$filter', ($filter) ->
 
     scope.$watch 'searchValue', (newVal, oldVal) ->
       if newVal isnt oldVal
-        scope.locations.filterData newVal
+        scope.locations.filterData name: newVal
 
     scope.unGroup = ->
       scope.groupLabel = ''
@@ -77,7 +77,6 @@ app.directive 'map', ['$compile', '$map', ($compile, $map) ->
   </div>'
   link: (scope, el) ->
     pinClick = false
-    markers = []
     infoWindow = new google.maps.InfoWindow()
     infoWindowTemplate = $compile('<info-window></info-window>') scope
 
@@ -132,7 +131,7 @@ app.factory '$locations', ['$rootScope', '$http', '$filter', ($rootScope, $http,
 
   filterData: (filterVal) ->
     if filterVal
-      @filteredData = $filter('filter') @data, name: filterVal
+      @filteredData = $filter('filter') @data, filterVal
     else
       @filteredData = @data
 ]
