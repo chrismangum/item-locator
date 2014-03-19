@@ -15,9 +15,7 @@ app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
 
     calcDistances = (searchPoint) ->
       _.each $locations.data, (loc) ->
-        dist = $map.calcDistance searchPoint, $map.genLatLng loc.lat, loc.lng
-        dist *= 0.000621371; #convert meters to miles
-        loc.distance = parseFloat dist.toFixed()
+        loc.distance = $map.calcDistance searchPoint, $map.genLatLng loc.lat, loc.lng
 
     $scope.locationSearch = ->
       $map.locationSearch $scope.searchAddress, (result) ->
@@ -140,7 +138,8 @@ app.factory '$map', ['$rootScope', ($rootScope) ->
     bounds
 
   calcDistance: (start, end) ->
-    google.maps.geometry.spherical.computeDistanceBetween start, end
+    dist = google.maps.geometry.spherical.computeDistanceBetween start, end
+    Math.round dist * 0.000621371 #convert meters to miles and round
 
   center: (point) ->
     @map.setCenter point
