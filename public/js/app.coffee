@@ -22,7 +22,7 @@ app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
     $scope.locationSearch = ->
       $map.locationSearch $scope.searchAddress, (result) ->
         calcDistances result.geometry.location
-        $locations.filteredData = $locations.data
+        $locations.unfilterData()
         $scope.sortField = 'distance'
         $scope.groupLabel = "Distance from \"#{result.formatted_address}\""
           
@@ -120,13 +120,13 @@ app.factory '$locations', ['$rootScope', '$http', '$filter', ($rootScope, $http,
   get: (url) ->
     $http.get(url).then (response) =>
       @data = response.data
-      @filteredData = @data
+      @unfilterData()
 
   filterData: (filterVal) ->
-    if filterVal
-      @filteredData = $filter('filter') @data, filterVal
-    else
-      @filteredData = @data
+    @filteredData = $filter('filter') @data, filterVal
+
+  unfilterData: ->
+    @filteredData = @data
 ]
 
 app.factory '$map', ['$rootScope', ($rootScope) ->
