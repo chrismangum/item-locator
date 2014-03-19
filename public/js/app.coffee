@@ -75,7 +75,7 @@ app.directive 'map', ['$compile', '$map', ($compile, $map) ->
 
     $map.init '#map-canvas'
       
-    google.maps.event.addListener infoWindow, 'closeclick', ->
+    $map.on 'closeclick', infoWindow, ->
       scope.locations.deactivateItem(true)
 
     scope.$watch 'locations.activeItem', (item) ->
@@ -103,30 +103,31 @@ app.directive 'map', ['$compile', '$map', ($compile, $map) ->
             pinClick = false
 ]
 
-app.factory '$locations', ['$rootScope', '$http', '$filter', ($rootScope, $http, $filter) ->
+app.factory '$locations', ['$rootScope', '$http', '$filter'
+  ($rootScope, $http, $filter) ->
 
-  activateItem: (index) ->
-    @deactivateItem()
-    @activeItem = @data[index]
-    @activeItem.isActive = true
-    $rootScope.$apply()
-    @activateItemCallback and @activateItemCallback()
+    activateItem: (index) ->
+      @deactivateItem()
+      @activeItem = @data[index]
+      @activeItem.isActive = true
+      $rootScope.$apply()
+      @activateItemCallback and @activateItemCallback()
 
-  deactivateItem: (apply) ->
-    @activeItem?.isActive = false
-    @activeItem = null
-    apply and $rootScope.$apply()
+    deactivateItem: (apply) ->
+      @activeItem?.isActive = false
+      @activeItem = null
+      apply and $rootScope.$apply()
 
-  get: (url) ->
-    $http.get(url).then (response) =>
-      @data = response.data
-      @unfilterData()
+    filterData: (filterVal) ->
+      @filteredData = $filter('filter') @data, filterVal
 
-  filterData: (filterVal) ->
-    @filteredData = $filter('filter') @data, filterVal
+    get: (url) ->
+      $http.get(url).then (response) =>
+        @data = response.data
+        @unfilterData()
 
-  unfilterData: ->
-    @filteredData = @data
+    unfilterData: ->
+      @filteredData = @data
 ]
 
 app.factory '$map', ['$rootScope', ($rootScope) ->
@@ -172,4 +173,7 @@ app.factory '$map', ['$rootScope', ($rootScope) ->
         @fit result.geometry.bounds
         callback result
         $rootScope.$apply()
+
+  on: (event, context, callback) ->
+    google.maps.event.addListener context, event, callback
 ]
