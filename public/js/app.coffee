@@ -1,23 +1,11 @@
 app = angular.module 'app', []
 
-app.controller 'mainCtrl', ['$scope', '$http', '$sce', '$map'
-  ($scope, $http, $sce, $map) ->
+app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
+  ($scope, $sce, $map, $locations) ->
     geocoder = new google.maps.Geocoder()
 
+    $scope.locations = $locations
     $scope.sortField = 'name'
-    $scope.activateItemCallback = ->
-
-    $scope.$on 'activateItem', (e, index) ->
-      $scope.activeItem = $scope.data[index]
-      $scope.$apply()
-      $scope.activateItemCallback()
-      
-    $scope.$on 'activateItemCallback', (e, callback) ->
-      $scope.activateItemCallback = callback
-
-    $scope.$on 'deactivateItem', ->
-      $scope.activeItem = null
-      $scope.$apply()
 
     $scope.$on 'unGroup', ->
       $scope.sortField = 'name'
@@ -30,7 +18,7 @@ app.controller 'mainCtrl', ['$scope', '$http', '$sce', '$map'
       $sce.trustAsHtml string
 
     calcDistances = (searchPoint) ->
-      _.each $scope.data, (loc) ->
+      _.each $locations.data, (loc) ->
         dist = $map.calcDistance searchPoint, $map.genLatLng loc.lat, loc.lng
         dist *= 0.000621371; #convert meters to miles
         loc.distance = parseFloat dist.toFixed()
@@ -41,21 +29,18 @@ app.controller 'mainCtrl', ['$scope', '$http', '$sce', '$map'
           result = results[0]
           $map.fit result.geometry.bounds
           calcDistances result.geometry.location
-          $scope.filteredData = $scope.data
+          $locations.filteredData = $locations.data
           $scope.sortField = 'distance'
           $scope.groupLabel = "Distance from \"#{result.formatted_address}\""
           $scope.$apply()
           
-    $http.get('clients.json').then (response) ->
-      data = response.data
-      $scope.data = angular.fromJson data
-      $scope.filteredData = $scope.data
+    $locations.get 'clients.json'
 ]
 
 app.directive 'activateItem', ->
   (scope, el, attrs) ->
     el.on 'click', ->
-      scope.$emit 'activateItem', attrs.activateItem
+      scope.locations.activateItem attrs.activateItem
 
 app.directive 'infoWindow', ->
   restrict: 'E'
@@ -66,27 +51,16 @@ app.directive 'list', ['$filter', ($filter) ->
   transclude: true
   scope:
     groupLabel: '='
-    data: '&'
-    filteredData: '='
+    locations: '='
     sortField: '&'
-    activeItem: '&'
     getLabel: '&'
   replace: true
   templateUrl: 'list.html'
   link: (scope) ->
-    scope.$watch (-> scope.activeItem()), (newItem, oldItem) ->
-      if oldItem isnt newItem
-        if oldItem
-          oldItem.name = oldItem.name.replace '*', ''
-        if newItem
-          newItem.name += '*'
 
     scope.$watch 'searchValue', (newVal, oldVal) ->
       if newVal isnt oldVal
-        if newVal
-          scope.filteredData = $filter('filter') scope.data(), name: newVal
-        else
-          scope.filteredData = scope.data()
+        scope.locations.filterData newVal
 
     scope.unGroup = ->
       scope.groupLabel = ''
@@ -97,8 +71,7 @@ app.directive 'map', ['$compile', '$map', ($compile, $map) ->
   restrict: 'E'
   replace: true
   scope:
-    data: '&'
-    activeItem: '&'
+    locations: '='
   template: '<div class="map-wrapper">
     <div class="map" id="map-canvas"></div>
   </div>'
@@ -111,31 +84,57 @@ app.directive 'map', ['$compile', '$map', ($compile, $map) ->
     $map.init '#map-canvas'
       
     google.maps.event.addListener infoWindow, 'closeclick', ->
-      scope.$emit 'deactivateItem'
+      scope.locations.deactivateItem(true)
 
-    scope.$watch (-> scope.activeItem()), (item) ->
+    scope.$watch 'locations.activeItem', (item) ->
       if item
         unless pinClick
           $map.center $map.markers[item.index].position
         infoWindow.open $map.map, $map.markers[item.index]
-
-    scope.$emit 'activateItemCallback', ->
-      infoWindow.setContent infoWindowTemplate[0].innerHTML
 
     filterMarkers = (data) ->
       indexes = _.indexBy data, 'index'
       _.each $map.markers, (item, i) ->
         item.setVisible i of indexes
 
-    scope.$watch (-> scope.data()), (newData, oldData) ->
+    scope.locations.activateItemCallback = ->
+      infoWindow.setContent infoWindowTemplate[0].innerHTML
+
+    scope.$watch 'locations.filteredData', (newData, oldData) ->
       if newData
         if oldData
           filterMarkers newData
         else
           $map.genMarkers newData, ->
             pinClick = true
-            scope.$emit 'activateItem', @index
+            scope.locations.activateItem @index
             pinClick = false
+]
+
+app.factory '$locations', ['$rootScope', '$http', '$filter', ($rootScope, $http, $filter) ->
+
+  activateItem: (index) ->
+    @deactivateItem()
+    @activeItem = @data[index]
+    @activeItem.isActive = true
+    $rootScope.$apply()
+    @activateItemCallback and @activateItemCallback()
+
+  deactivateItem: (apply) ->
+    @activeItem?.isActive = false
+    @activeItem = null
+    apply and $rootScope.$apply()
+
+  get: (url) ->
+    $http.get(url).then (response) =>
+      @data = response.data
+      @filteredData = @data
+
+  filterData: (filterVal) ->
+    if filterVal
+      @filteredData = $filter('filter') @data, name: filterVal
+    else
+      @filteredData = @data
 ]
 
 app.factory '$map', ->
@@ -146,9 +145,6 @@ app.factory '$map', ->
       bounds.extend marker.position
     bounds
 
-  genLatLng = (lat, lng) ->
-    new google.maps.LatLng lat, lng
-
   calcDistance: (start, end) ->
     google.maps.geometry.spherical.computeDistanceBetween start, end
 
@@ -158,14 +154,14 @@ app.factory '$map', ->
   fit: (bounds) ->
     @map.fitBounds bounds
 
-  genLatLng: genLatLng
+  genLatLng: (lat, lng) ->
+    new google.maps.LatLng lat, lng
 
   genMarkers: (data, eventHandler) ->
-    map = @map
-    @markers = _.map data, (loc, i) ->
+    @markers = _.map data, (loc, i) =>
       marker = new google.maps.Marker
-        map: map
-        position: genLatLng loc.lat, loc.lng
+        map: @map
+        position: @genLatLng loc.lat, loc.lng
         index: i
       google.maps.event.addListener marker, 'click', eventHandler
       marker
@@ -174,4 +170,5 @@ app.factory '$map', ->
   init: (selector) ->
     @map = new google.maps.Map $(selector)[0],
       zoom: 5
-      center: genLatLng 39.8282, -98.5795
+      center: @genLatLng 39.8282, -98.5795
+

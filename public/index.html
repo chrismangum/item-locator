@@ -23,15 +23,15 @@
   </div>
   <div class="content">
     <div class="sidebar-wrapper">
-      <list filtered-data="filteredData" group-label="groupLabel" data="data" active-item="activeItem" sort-field="sortField" get-label="getLabel(data, i)">
+      <list locations="locations" group-label="groupLabel" sort-field="sortField" get-label="getLabel(data, i)">
         <div class="listing-info">
-          <div class="info-name">{{item.name}}</div>
+          <div class="info-name">{{item.name}}{{item.isActive ? '*' : ''}}</div>
           <div class="info-address1">{{item.address}}</div>
           <div class="info-address2">{{item.city}}, {{item.state}} {{item.zip}}</div>
         </div>
       </list>
     </div>
-    <map map="map" data="filteredData" active-item="activeItem"></map>
+    <map map="map" locations="locations"></map>
   </div>
   <script src="http://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=false"></script>
   <script src="/vendor/jquery/dist/jquery.min.js"></script>
