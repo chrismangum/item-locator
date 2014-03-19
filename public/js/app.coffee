@@ -76,7 +76,7 @@ app.directive 'map', ['$compile', '$map', ($compile, $map) ->
     $map.init '#map-canvas'
       
     $map.on 'closeclick', infoWindow, ->
-      scope.locations.deactivateItem(true)
+      scope.locations.deactivateItem true
 
     scope.$watch 'locations.activeItem', (item) ->
       if item
