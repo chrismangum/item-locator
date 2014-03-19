@@ -157,7 +157,7 @@ app.factory '$map', ['$rootScope', ($rootScope) ->
         map: @map
         position: @genLatLng loc.lat, loc.lng
         index: i
-      google.maps.event.addListener marker, 'click', eventHandler
+      @on 'click', marker, eventHandler
       marker
     @fit genMarkerBounds @markers
 
