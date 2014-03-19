@@ -10,7 +10,7 @@
     <a class="label-close" href="#"><i class="icon-cancel-circle" ng-click="unGroup()"></i></a>
   </div>
   <div class="sidebar-listings">
-    <div ng-repeat="item in (sortedData = (locations.filteredData | orderBy:sortField()))">
+    <div ng-repeat="item in (sortedData = (locations.filteredData | orderBy:sortField))">
       <div ng-if="groupLabel" ng-bind-html="getLabel({data: sortedData, i: $index})"></div>
       <a activate-item="{{item.index}}" class="sidebar-listing" ng-transclude></a>
     </div>

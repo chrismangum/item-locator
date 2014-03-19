@@ -2,13 +2,9 @@ app = angular.module 'app', []
 
 app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
   ($scope, $sce, $map, $locations) ->
-    geocoder = new google.maps.Geocoder()
 
     $scope.locations = $locations
     $scope.sortField = 'name'
-
-    $scope.$on 'unGroup', ->
-      $scope.sortField = 'name'
 
     $scope.getLabel = (locations, i) ->
       distance = _.find [500, 250, 100, 50, 20, 10, 5, 1], (dist) ->
@@ -24,15 +20,11 @@ app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
         loc.distance = parseFloat dist.toFixed()
 
     $scope.locationSearch = ->
-      geocoder.geocode 'address': $scope.searchAddress, (results, status) ->
-        if results.length
-          result = results[0]
-          $map.fit result.geometry.bounds
-          calcDistances result.geometry.location
-          $locations.filteredData = $locations.data
-          $scope.sortField = 'distance'
-          $scope.groupLabel = "Distance from \"#{result.formatted_address}\""
-          $scope.$apply()
+      $map.locationSearch $scope.searchAddress, (result) ->
+        calcDistances result.geometry.location
+        $locations.filteredData = $locations.data
+        $scope.sortField = 'distance'
+        $scope.groupLabel = "Distance from \"#{result.formatted_address}\""
           
     $locations.get 'clients.json'
 ]
@@ -50,13 +42,14 @@ app.directive 'list', ['$filter', ($filter) ->
   restrict: 'E'
   transclude: true
   scope:
+    getLabel: '&'
     groupLabel: '='
     locations: '='
-    sortField: '&'
-    getLabel: '&'
+    sortField: '='
   replace: true
   templateUrl: 'list.html'
   link: (scope) ->
+    originalSort = scope.sortField
 
     scope.$watch 'searchValue', (newVal, oldVal) ->
       if newVal isnt oldVal
@@ -64,7 +57,7 @@ app.directive 'list', ['$filter', ($filter) ->
 
     scope.unGroup = ->
       scope.groupLabel = ''
-      scope.$emit 'unGroup'
+      scope.sortField = originalSort
 ]
 
 app.directive 'map', ['$compile', '$map', ($compile, $map) ->
@@ -136,8 +129,9 @@ app.factory '$locations', ['$rootScope', '$http', '$filter', ($rootScope, $http,
       @filteredData = @data
 ]
 
-app.factory '$map', ->
+app.factory '$map', ['$rootScope', ($rootScope) ->
 
+  geocoder = new google.maps.Geocoder()
   genMarkerBounds = (markers) ->
     bounds = new google.maps.LatLngBounds()
     _.each markers, (marker) ->
@@ -171,3 +165,11 @@ app.factory '$map', ->
       zoom: 5
       center: @genLatLng 39.8282, -98.5795
 
+  locationSearch: (address, callback) ->
+    geocoder.geocode 'address': address, (results, status) =>
+      if results.length
+        result = results[0]
+        @fit result.geometry.bounds
+        callback result
+        $rootScope.$apply()
+]
