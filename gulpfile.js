@@ -13,7 +13,7 @@ gulp.task('scripts', function () {
   return gulp.src(paths.js)
     .pipe(coffee())
     .pipe(uglify())
-    .pipe(concat('app.js'))
+    .pipe(concat('app.min.js'))
     .pipe(gulp.dest('public/js'));
 });
 
