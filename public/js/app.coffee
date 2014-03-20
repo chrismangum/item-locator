@@ -18,11 +18,15 @@ app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
         loc.distance = $map.calcDistance searchPoint, $map.genLatLng loc.lat, loc.lng
 
     $scope.locationSearch = ->
-      $map.locationSearch $scope.searchAddress, (result) ->
-        $locations.unfilterData()
-        calcDistances result.geometry.location
-        $scope.sortField = 'distance'
-        $scope.groupLabel = "Distance from \"#{result.formatted_address}\""
+      if $scope.searchAddress
+        $map.locationSearch $scope.searchAddress, (result) ->
+          $locations.unfilterData()
+          calcDistances result.geometry.location
+          $scope.sortField = 'distance'
+          $scope.groupLabel = "Distance from \"#{result.formatted_address}\""
+      else
+        $scope.sortField = 'name'
+        $scope.groupLabel = ''
           
     $locations.get 'clients.json'
 ]
