@@ -50,7 +50,7 @@ app.directive 'list', ['$filter', ($filter) ->
     originalSort = scope.sortField
 
     scope.$watch 'searchValue', (newVal, oldVal) ->
-      if newVal isnt oldVal
+      if newVal
         scope.locations.filterData name: newVal
 
     scope.unGroup = ->
