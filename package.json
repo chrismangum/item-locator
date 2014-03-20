@@ -17,16 +17,10 @@
   },
   "homepage": "https://github.com/mtdbass5/item_locator",
   "dependencies": {
-    "grunt": "~0.4.2",
-    "matchdep": "~0.3.0",
-    "grunt-nodemon": "~0.1.2",
-    "grunt-contrib-watch": "~0.5.3",
-    "stylus": "~0.41.0",
-    "grunt-concurrent": "~0.4.2",
-    "grunt-contrib-uglify": "~0.2.7",
-    "grunt-contrib-jshint": "~0.7.2",
-    "grunt-contrib-cssmin": "~0.7.0",
     "express": "~3.4.8",
-    "grunt-contrib-coffee": "^0.10.1"
+    "gulp": "^3.5.6",
+    "gulp-coffee": "^1.4.1",
+    "gulp-concat": "^2.2.0",
+    "gulp-uglify": "^0.2.1"
   }
 }
