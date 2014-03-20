@@ -110,7 +110,7 @@ app.factory '$locations', ['$rootScope', '$http', '$filter'
 
     activateItem: (index) ->
       @deactivateItem()
-      @activeItem = @data[index]
+      @activeItem = @_pristineData[index]
       @activeItem.isActive = true
       $rootScope.$apply()
       @activateItemCallback?()
