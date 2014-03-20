@@ -169,7 +169,10 @@ app.factory '$map', ['$rootScope', ($rootScope) ->
     geocoder.geocode 'address': address, (results, status) =>
       if results.length
         result = results[0]
-        @fit result.geometry.bounds
+        if result.geometry.bounds
+          @fit result.geometry.bounds
+        else
+          @center result.geometry.location
         callback result
         $rootScope.$apply()
 
