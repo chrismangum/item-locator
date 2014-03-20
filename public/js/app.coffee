@@ -14,7 +14,7 @@ app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
       $sce.trustAsHtml string
 
     calcDistances = (searchPoint) ->
-      _.each $locations.data, (loc) ->
+      for loc in $locations.data
         loc.distance = $map.calcDistance searchPoint, $map.genLatLng loc.lat, loc.lng
 
     $scope.locationSearch = ->
@@ -84,8 +84,8 @@ app.directive 'map', ['$compile', '$map', ($compile, $map) ->
 
     filterMarkers = (data) ->
       indexes = _.indexBy data, 'index'
-      _.each $map.markers, (item, i) ->
-        item.setVisible i of indexes
+      for marker, i in $map.markers
+        marker.setVisible i of indexes
 
     scope.locations.activateItemCallback = ->
       infoWindow.setContent infoWindowTemplate[0].innerHTML
@@ -133,7 +133,7 @@ app.factory '$map', ['$rootScope', ($rootScope) ->
   geocoder = new google.maps.Geocoder()
   genMarkerBounds = (markers) ->
     bounds = new google.maps.LatLngBounds()
-    _.each markers, (marker) ->
+    for marker in markers
       bounds.extend marker.position
     bounds
 
