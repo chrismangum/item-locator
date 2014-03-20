@@ -1,9 +1,8 @@
-var gulp = require('gulp');
-
-var coffee = require('gulp-coffee');
-var uglify = require('gulp-uglify');
-var concat = require('gulp-concat');
-var compass = require('gulp-compass');
+var gulp = require('gulp'),
+  coffee = require('gulp-coffee'),
+  uglify = require('gulp-uglify'),
+  concat = require('gulp-concat'),
+  compass = require('gulp-compass');
 
 var paths = {
   js: 'public/js/*.coffee',
@@ -28,8 +27,8 @@ gulp.task('compass', function () {
 });
 
 gulp.task('watch', function () {
-  gulp.watch(paths.js, ['scripts'])
-  gulp.watch(paths.scss, ['compass'])
+  gulp.watch(paths.js, ['scripts']);
+  gulp.watch(paths.scss, ['compass']);
 });
 
-gulp.task('default', ['compass', 'scripts', 'watch']);
+gulp.task('default', ['scripts', 'compass', 'watch']);
