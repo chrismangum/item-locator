@@ -22,6 +22,7 @@
     "gulp-coffee": "^1.4.1",
     "gulp-concat": "^2.2.0",
     "gulp-uglify": "^0.2.1",
-    "gulp-compass": "^1.1.6"
+    "gulp-compass": "^1.1.6",
+    "gulp-nodemon": "^1.0.2"
   }
 }

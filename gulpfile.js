@@ -2,7 +2,8 @@ var gulp = require('gulp'),
   coffee = require('gulp-coffee'),
   uglify = require('gulp-uglify'),
   concat = require('gulp-concat'),
-  compass = require('gulp-compass');
+  compass = require('gulp-compass'),
+  nodemon = require('gulp-nodemon');
 
 var paths = {
   js: 'public/js/*.coffee',
@@ -26,9 +27,17 @@ gulp.task('compass', function () {
     }));
 });
 
+gulp.task('nodemon', function () {
+  nodemon({
+    script: 'server/app.js',
+    ext: 'js,coffee',
+    ignore: ['public/**']
+  });
+});
+
 gulp.task('watch', function () {
   gulp.watch(paths.js, ['scripts']);
   gulp.watch(paths.scss, ['compass']);
 });
 
-gulp.task('default', ['scripts', 'compass', 'watch']);
+gulp.task('default', ['scripts', 'compass', 'watch', 'nodemon']);
