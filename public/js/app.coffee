@@ -8,7 +8,7 @@ app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
 
     $scope.getLabel = (locations, i) ->
       distance = _.find [500, 250, 100, 50, 20, 10, 5, 1], (dist) ->
-        locations[i].distance >= dist and (i is 0 or locations[i - 1].distance < dist)
+        locations[i].distance >= dist and (not i or locations[i - 1].distance < dist)
       if distance
         string = "<div class='label label-miles'>#{distance}+ Miles</div>"
       $sce.trustAsHtml string
@@ -19,8 +19,8 @@ app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
 
     $scope.locationSearch = ->
       $map.locationSearch $scope.searchAddress, (result) ->
-        calcDistances result.geometry.location
         $locations.unfilterData()
+        calcDistances result.geometry.location
         $scope.sortField = 'distance'
         $scope.groupLabel = "Distance from \"#{result.formatted_address}\""
           
@@ -66,12 +66,12 @@ app.directive 'map', ['$compile', '$map', ($compile, $map) ->
   template: '<div class="map-wrapper">
     <div class="map" id="map-canvas"></div>
   </div>'
-  link: (scope, el) ->
+  link: (scope, element) ->
     pinClick = false
     infoWindow = new google.maps.InfoWindow()
     infoWindowTemplate = $compile('<info-window></info-window>') scope
 
-    $map.init '#map-canvas'
+    $map.init element.children()[0]
       
     $map.on 'closeclick', infoWindow, ->
       scope.locations.deactivateItem true
@@ -90,7 +90,7 @@ app.directive 'map', ['$compile', '$map', ($compile, $map) ->
     scope.locations.activateItemCallback = ->
       infoWindow.setContent infoWindowTemplate[0].innerHTML
 
-    scope.$watch 'locations.filteredData', (newData, oldData) ->
+    scope.$watch 'locations.data', (newData, oldData) ->
       if newData
         if oldData
           filterMarkers newData
@@ -109,23 +109,23 @@ app.factory '$locations', ['$rootScope', '$http', '$filter'
       @activeItem = @data[index]
       @activeItem.isActive = true
       $rootScope.$apply()
-      @activateItemCallback and @activateItemCallback()
+      @activateItemCallback?()
 
     deactivateItem: (apply) ->
       @activeItem?.isActive = false
       @activeItem = null
-      apply and $rootScope.$apply()
+      $rootScope.$apply() if apply
 
     filterData: (filterVal) ->
-      @filteredData = $filter('filter') @data, filterVal
+      @data = $filter('filter') @_pristineData, filterVal
 
     get: (url) ->
       $http.get(url).then (response) =>
-        @data = response.data
+        @_pristineData = response.data
         @unfilterData()
 
     unfilterData: ->
-      @filteredData = @data
+      @data = @_pristineData
 ]
 
 app.factory '$map', ['$rootScope', ($rootScope) ->
@@ -160,8 +160,8 @@ app.factory '$map', ['$rootScope', ($rootScope) ->
       marker
     @fit genMarkerBounds @markers
 
-  init: (selector) ->
-    @map = new google.maps.Map $(selector)[0],
+  init: (element) ->
+    @map = new google.maps.Map element,
       zoom: 5
       center: @genLatLng 39.8282, -98.5795
 
