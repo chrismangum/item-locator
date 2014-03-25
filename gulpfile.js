@@ -31,7 +31,7 @@ gulp.task('nodemon', function () {
   nodemon({
     script: 'server/app.js',
     ext: 'js,coffee',
-    ignore: ['public/**']
+    ignore: ['public/**', 'node_modules/**']
   });
 });
 
