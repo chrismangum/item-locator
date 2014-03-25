@@ -62,7 +62,7 @@ app.directive 'list', ['$filter', ($filter) ->
       scope.sortField = originalSort
 ]
 
-app.directive 'map', ['$compile', '$map', ($compile, $map) ->
+app.directive 'map', ['$map', ($map) ->
   restrict: 'E'
   replace: true
   scope:
@@ -72,19 +72,18 @@ app.directive 'map', ['$compile', '$map', ($compile, $map) ->
   </div>'
   link: (scope, element, attrs) ->
     pinClick = false
-    infoWindow = new google.maps.InfoWindow()
-    infoWindowTemplate = $compile('<info-window></info-window>') scope
 
     $map.init element.children()[0], attrs.lat, attrs.lng
+    $map.initInfoWindow scope
       
-    $map.on 'closeclick', infoWindow, ->
+    $map.on 'closeclick', $map.infoWindow, ->
       scope.locations.deactivateItem true
 
     scope.$watch 'locations.activeItem', (item) ->
       if item
         unless pinClick
           $map.center $map.markers[item.index].position
-        infoWindow.open $map.map, $map.markers[item.index]
+        $map.infoWindow.open $map.markers[item.index]
 
     filterMarkers = (data) ->
       indexes = _.indexBy data, 'index'
@@ -92,7 +91,7 @@ app.directive 'map', ['$compile', '$map', ($compile, $map) ->
         marker.setVisible i of indexes
 
     scope.locations.activateItemCallback = ->
-      infoWindow.setContent infoWindowTemplate[0].innerHTML
+      $map.infoWindow.update()
 
     scope.$watch 'locations.data', (newData, oldData) ->
       if newData
@@ -132,7 +131,7 @@ app.factory '$locations', ['$rootScope', '$http', '$filter'
       @data = @_pristineData
 ]
 
-app.factory '$map', ['$rootScope', ($rootScope) ->
+app.factory '$map', ['$rootScope', '$compile', ($rootScope, $compile) ->
 
   geocoder = new google.maps.Geocoder()
   genMarkerBounds = (markers) ->
@@ -168,6 +167,16 @@ app.factory '$map', ['$rootScope', ($rootScope) ->
     @map = new google.maps.Map element,
       zoom: 5
       center: @genLatLng lat, lng
+
+  initInfoWindow: (scope) ->
+    iw = new google.maps.InfoWindow()
+    iwTemplate = $compile('<info-window></info-window>')(scope)[0]
+    iw._open = iw.open
+    iw.open = (context) =>
+      iw._open @map, context
+    iw.update = ->
+      iw.setContent iwTemplate.innerHTML
+    @infoWindow = iw
 
   locationSearch: (address, callback) ->
     geocoder.geocode 'address': address, (results, status) =>
