@@ -70,12 +70,12 @@ app.directive 'map', ['$compile', '$map', ($compile, $map) ->
   template: '<div class="map-wrapper">
     <div class="map" id="map-canvas"></div>
   </div>'
-  link: (scope, element) ->
+  link: (scope, element, attrs) ->
     pinClick = false
     infoWindow = new google.maps.InfoWindow()
     infoWindowTemplate = $compile('<info-window></info-window>') scope
 
-    $map.init element.children()[0]
+    $map.init element.children()[0], attrs.lat, attrs.lng
       
     $map.on 'closeclick', infoWindow, ->
       scope.locations.deactivateItem true
@@ -164,10 +164,10 @@ app.factory '$map', ['$rootScope', ($rootScope) ->
       marker
     @fit genMarkerBounds @markers
 
-  init: (element) ->
+  init: (element, lat, lng) ->
     @map = new google.maps.Map element,
       zoom: 5
-      center: @genLatLng 39.8282, -98.5795
+      center: @genLatLng lat, lng
 
   locationSearch: (address, callback) ->
     geocoder.geocode 'address': address, (results, status) =>
