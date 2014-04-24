@@ -75,7 +75,7 @@ app.directive 'map', ['$map', ($map) ->
 
     $map.init element.children()[0], attrs.lat, attrs.lng
     $map.initInfoWindow scope
-      
+
     $map.on 'closeclick', $map.infoWindow, ->
       scope.locations.deactivateItem true
 
