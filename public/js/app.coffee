@@ -27,7 +27,7 @@ app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
       else
         $scope.sortField = 'name'
         $scope.groupLabel = ''
-          
+
     $locations.get 'clients.json'
 ]
 
