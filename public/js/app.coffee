@@ -15,7 +15,7 @@ app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
 
     calcDistances = (searchPoint) ->
       for loc in $locations.data
-        loc.distance = $map.calcDistance searchPoint, $map.genLatLng loc.lat, loc.lng
+        loc.distance = $map.map.calcDistance searchPoint, $map.genLatLng loc.lat, loc.lng
 
     $scope.locationSearch = ->
       if $scope.searchAddress
@@ -76,13 +76,13 @@ app.directive 'map', ['$map', '$compile', ($map, $compile) ->
     $map.init element.children()[0], attrs.lat, attrs.lng
     infoWindow = new InfoWindow $compile('<info-window></info-window>')(scope)[0], $map.map
 
-    $map.on 'closeclick', infoWindow, ->
+    $map.map.on 'closeclick', infoWindow, ->
       scope.locations.deactivateItem true
 
     scope.$watch 'locations.activeItem', (item) ->
       if item
         unless pinClick
-          $map.center $map.markers[item.index].position
+          $map.map.setCenter $map.markers[item.index].position
         infoWindow.show $map.markers[item.index]
 
     filterMarkers = (data) ->
@@ -106,10 +106,24 @@ app.directive 'map', ['$map', '$compile', ($map, $compile) ->
 
 class InfoWindow extends google.maps.InfoWindow
   constructor: (@_template, @_map) ->
+
   show: (context) ->
     @open @_map, context
+
   update: ->
     @setContent @_template.innerHTML
+
+class Map extends google.maps.Map
+  calcDistance: (start, end) ->
+    dist = google.maps.geometry.spherical.computeDistanceBetween start, end
+    Math.round dist * 0.000621371 #convert meters to miles and round
+
+  fit: (bounds) ->
+    @fitBounds bounds
+
+  on: (event, context, callback) ->
+    google.maps.event.addListener context, event, callback
+
 
 app.factory '$locations', ['$rootScope', '$http', '$filter'
   ($rootScope, $http, $filter) ->
@@ -147,16 +161,6 @@ app.factory '$map', ['$rootScope', '$compile', ($rootScope, $compile) ->
       bounds.extend marker.position
     bounds
 
-  calcDistance: (start, end) ->
-    dist = google.maps.geometry.spherical.computeDistanceBetween start, end
-    Math.round dist * 0.000621371 #convert meters to miles and round
-
-  center: (point) ->
-    @map.setCenter point
-
-  fit: (bounds) ->
-    @map.fitBounds bounds
-
   genLatLng: (lat, lng) ->
     new google.maps.LatLng lat, lng
 
@@ -166,12 +170,12 @@ app.factory '$map', ['$rootScope', '$compile', ($rootScope, $compile) ->
         map: @map
         position: @genLatLng loc.lat, loc.lng
         index: i
-      @on 'click', marker, eventHandler
+      @map.on 'click', marker, eventHandler
       marker
-    @fit genMarkerBounds @markers
+    @map.fit genMarkerBounds @markers
 
   init: (element, lat, lng) ->
-    @map = new google.maps.Map element,
+    @map = new Map element,
       zoom: 5
       center: @genLatLng lat, lng
 
@@ -180,12 +184,10 @@ app.factory '$map', ['$rootScope', '$compile', ($rootScope, $compile) ->
       if results.length
         result = results[0]
         if result.geometry.bounds
-          @fit result.geometry.bounds
+          @map.fit result.geometry.bounds
         else
-          @center result.geometry.location
+          @map.setCenter result.geometry.location
         callback result
         $rootScope.$apply()
 
-  on: (event, context, callback) ->
-    google.maps.event.addListener context, event, callback
 ]
