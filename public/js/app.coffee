@@ -1,6 +1,17 @@
 app = angular.module 'app', []
 LatLng = google.maps.LatLng
 
+class Geocoder extends google.maps.Geocoder
+  geocode: (address, map, callback) ->
+    super 'address': address, (results, status) ->
+      if results.length
+        result = results[0]
+        if result.geometry.bounds
+          map.fitBounds result.geometry.bounds
+        else
+          map.setCenter result.geometry.location
+        callback? result
+
 class InfoWindow extends google.maps.InfoWindow
   constructor: (@_template, @_map) ->
 
@@ -26,6 +37,15 @@ class Map extends google.maps.Map
     for marker in markers
       bounds.extend marker.position
     bounds
+
+  genMarkers: (data, eventHandler) ->
+    _.map data, (loc, i) =>
+      marker = new google.maps.Marker
+        map: @
+        position: new LatLng loc.lat, loc.lng
+        index: i
+      @on 'click', marker, eventHandler
+      marker
 
   on: (event, context, callback) ->
     google.maps.event.addListener context, event, callback
@@ -163,16 +183,10 @@ app.factory '$locations', ['$rootScope', '$http', '$filter'
 ]
 
 app.factory '$map', ['$rootScope', '$compile', ($rootScope, $compile) ->
-  geocoder = new google.maps.Geocoder()
+  geocoder = new Geocoder()
 
   genMarkers: (data, eventHandler) ->
-    @markers = _.map data, (loc, i) =>
-      marker = new google.maps.Marker
-        map: @map
-        position: new LatLng loc.lat, loc.lng
-        index: i
-      @map.on 'click', marker, eventHandler
-      marker
+    @markers = @map.genMarkers data, eventHandler
     @map.fitBounds @markers
 
   init: (element, lat, lng) ->
@@ -181,14 +195,7 @@ app.factory '$map', ['$rootScope', '$compile', ($rootScope, $compile) ->
       center: new LatLng lat, lng
 
   locationSearch: (address, callback) ->
-    geocoder.geocode 'address': address, (results, status) =>
-      if results.length
-        result = results[0]
-        if result.geometry.bounds
-          @map.fitBounds result.geometry.bounds
-        else
-          @map.setCenter result.geometry.location
-        callback result
-        $rootScope.$apply()
-
+    geocoder.geocode address, @map, (result) ->
+      callback result
+      $rootScope.$apply()
 ]
