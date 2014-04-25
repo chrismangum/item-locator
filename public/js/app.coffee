@@ -83,7 +83,7 @@ app.directive 'map', ['$map', '$compile', ($map, $compile) ->
       if item
         unless pinClick
           $map.map.setCenter $map.markers[item.index].position
-        infoWindow.show $map.markers[item.index]
+        infoWindow.open $map.markers[item.index]
 
     filterMarkers = (data) ->
       indexes = _.indexBy data, 'index'
@@ -107,8 +107,8 @@ app.directive 'map', ['$map', '$compile', ($map, $compile) ->
 class InfoWindow extends google.maps.InfoWindow
   constructor: (@_template, @_map) ->
 
-  show: (context) ->
-    @open @_map, context
+  open: (context) ->
+    super @_map, context
 
   update: ->
     @setContent @_template.innerHTML
@@ -123,7 +123,6 @@ class Map extends google.maps.Map
 
   on: (event, context, callback) ->
     google.maps.event.addListener context, event, callback
-
 
 app.factory '$locations', ['$rootScope', '$http', '$filter'
   ($rootScope, $http, $filter) ->
