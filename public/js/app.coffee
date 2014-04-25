@@ -1,4 +1,35 @@
 app = angular.module 'app', []
+LatLng = google.maps.LatLng
+
+class InfoWindow extends google.maps.InfoWindow
+  constructor: (@_template, @_map) ->
+
+  open: (context) ->
+    super @_map, context
+
+  update: ->
+    @setContent @_template.innerHTML
+
+class Map extends google.maps.Map
+  calcDistance: (start, end) ->
+    dist = google.maps.geometry.spherical.computeDistanceBetween start, end
+    Math.round dist * 0.000621371 #convert meters to miles and round
+
+  fitBounds: (bounds) ->
+    if bounds.length
+      super @_genMarkerBounds bounds
+    else
+      super bounds
+
+  _genMarkerBounds: (markers) ->
+    bounds = new google.maps.LatLngBounds()
+    for marker in markers
+      bounds.extend marker.position
+    bounds
+
+  on: (event, context, callback) ->
+    google.maps.event.addListener context, event, callback
+
 
 app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
   ($scope, $sce, $map, $locations) ->
@@ -15,7 +46,7 @@ app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
 
     calcDistances = (searchPoint) ->
       for loc in $locations.data
-        loc.distance = $map.map.calcDistance searchPoint, $map.genLatLng loc.lat, loc.lng
+        loc.distance = $map.map.calcDistance searchPoint, new LatLng loc.lat, loc.lng
 
     $scope.locationSearch = ->
       if $scope.searchAddress
@@ -104,26 +135,6 @@ app.directive 'map', ['$map', '$compile', ($map, $compile) ->
             pinClick = false
 ]
 
-class InfoWindow extends google.maps.InfoWindow
-  constructor: (@_template, @_map) ->
-
-  open: (context) ->
-    super @_map, context
-
-  update: ->
-    @setContent @_template.innerHTML
-
-class Map extends google.maps.Map
-  calcDistance: (start, end) ->
-    dist = google.maps.geometry.spherical.computeDistanceBetween start, end
-    Math.round dist * 0.000621371 #convert meters to miles and round
-
-  fit: (bounds) ->
-    @fitBounds bounds
-
-  on: (event, context, callback) ->
-    google.maps.event.addListener context, event, callback
-
 app.factory '$locations', ['$rootScope', '$http', '$filter'
   ($rootScope, $http, $filter) ->
 
@@ -152,38 +163,29 @@ app.factory '$locations', ['$rootScope', '$http', '$filter'
 ]
 
 app.factory '$map', ['$rootScope', '$compile', ($rootScope, $compile) ->
-
   geocoder = new google.maps.Geocoder()
-  genMarkerBounds = (markers) ->
-    bounds = new google.maps.LatLngBounds()
-    for marker in markers
-      bounds.extend marker.position
-    bounds
-
-  genLatLng: (lat, lng) ->
-    new google.maps.LatLng lat, lng
 
   genMarkers: (data, eventHandler) ->
     @markers = _.map data, (loc, i) =>
       marker = new google.maps.Marker
         map: @map
-        position: @genLatLng loc.lat, loc.lng
+        position: new LatLng loc.lat, loc.lng
         index: i
       @map.on 'click', marker, eventHandler
       marker
-    @map.fit genMarkerBounds @markers
+    @map.fitBounds @markers
 
   init: (element, lat, lng) ->
     @map = new Map element,
       zoom: 5
-      center: @genLatLng lat, lng
+      center: new LatLng lat, lng
 
   locationSearch: (address, callback) ->
     geocoder.geocode 'address': address, (results, status) =>
       if results.length
         result = results[0]
         if result.geometry.bounds
-          @map.fit result.geometry.bounds
+          @map.fitBounds result.geometry.bounds
         else
           @map.setCenter result.geometry.location
         callback result
