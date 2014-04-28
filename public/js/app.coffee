@@ -49,8 +49,9 @@ class Map extends google.maps.Map
       marker = new google.maps.Marker
         map: @
         position: new LatLng loc.lat, loc.lng
-        index: i
+        data: loc
       @on 'click', marker, eventHandler
+      loc.marker = marker
       marker
 
   on: (event, context, callback) ->
@@ -91,7 +92,7 @@ app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
 app.directive 'activateItem', ->
   (scope, el, attrs) ->
     el.on 'click', ->
-      scope.locations.activateItem attrs.activateItem
+      scope.locations.activateItem scope.$apply attrs.activateItem
 
 app.directive 'infoWindow', ->
   restrict: 'E'
@@ -139,13 +140,13 @@ app.directive 'map', ['$map', '$compile', ($map, $compile) ->
     scope.$watch 'locations.activeItem', (item) ->
       if item
         unless pinClick
-          $map.map.setCenter $map.markers[item.index].position
-        infoWindow.open $map.markers[item.index]
+          $map.map.setCenter item.marker.position
+        infoWindow.open item.marker
 
     filterMarkers = (data) ->
-      indexes = _.indexBy data, 'index'
-      for marker, i in $map.markers
-        marker.setVisible i of indexes
+      markers = _.pluck data, 'marker'
+      for marker in $map.markers
+        marker.setVisible markers.indexOf(marker) isnt -1
 
     scope.locations.activateItemCallback = ->
       infoWindow.update()
@@ -157,16 +158,16 @@ app.directive 'map', ['$map', '$compile', ($map, $compile) ->
         else
           $map.genMarkers newData, ->
             pinClick = true
-            scope.locations.activateItem @index
+            scope.locations.activateItem @data
             pinClick = false
 ]
 
 app.factory '$locations', ['$rootScope', '$http', '$filter'
   ($rootScope, $http, $filter) ->
 
-    activateItem: (index) ->
+    activateItem: (item) ->
       @deactivateItem()
-      @activeItem = @_pristineData[index]
+      @activeItem = item
       @activeItem.isActive = true
       $rootScope.$apply()
       @activateItemCallback?()
