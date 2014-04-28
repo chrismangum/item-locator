@@ -22,6 +22,12 @@ class InfoWindow extends google.maps.InfoWindow
     @setContent @_template.innerHTML
 
 class Map extends google.maps.Map
+  constructor: (element) ->
+    super element,
+      #required properties:
+      center: new LatLng '39.8282', '-98.5795'
+      zoom: 5
+
   calcDistance: (start, end) ->
     dist = google.maps.geometry.spherical.computeDistanceBetween start, end
     Math.round dist * 0.000621371 #convert meters to miles and round
@@ -124,7 +130,7 @@ app.directive 'map', ['$map', '$compile', ($map, $compile) ->
   link: (scope, element, attrs) ->
     pinClick = false
 
-    $map.init element.children()[0], attrs.lat, attrs.lng
+    $map.init element.children()[0]
     infoWindow = new InfoWindow $compile('<info-window></info-window>')(scope)[0], $map.map
 
     $map.map.on 'closeclick', infoWindow, ->
@@ -182,17 +188,15 @@ app.factory '$locations', ['$rootScope', '$http', '$filter'
       @data = @_pristineData
 ]
 
-app.factory '$map', ['$rootScope', '$compile', ($rootScope, $compile) ->
+app.factory '$map', ['$rootScope', ($rootScope) ->
   geocoder = new Geocoder()
 
   genMarkers: (data, eventHandler) ->
     @markers = @map.genMarkers data, eventHandler
     @map.fitBounds @markers
 
-  init: (element, lat, lng) ->
-    @map = new Map element,
-      zoom: 5
-      center: new LatLng lat, lng
+  init: (element) ->
+    @map = new Map element
 
   locationSearch: (address, callback) ->
     geocoder.geocode address, @map, (result) ->
