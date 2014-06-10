@@ -41,4 +41,4 @@ gulp.task('watch', function () {
 });
 
 gulp.task('default', ['scripts', 'compass', 'watch', 'nodemon']);
-gulp.task('heroku:development', ['scripts', 'compass']);
+gulp.task('heroku:development', ['scripts']);
