@@ -2,4 +2,3 @@ public/vendor
 *.min.js
 public/js/*.js
 .sass-cache
-*.css
