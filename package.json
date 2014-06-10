@@ -2,7 +2,7 @@
   "name": "item_locator",
   "version": "0.0.0",
   "description": "item_locator ============",
-  "main": "Gruntfile.js",
+  "main": "gulp",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
