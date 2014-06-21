@@ -1,13 +1,10 @@
 <div class="sidebar">
-  <div class="sidebar-search-bar">
-    <div class="search-bar-wrapper">
-      <a class="search-bar-icon"><i class="icon-search"></i></a>
-      <input ng-model="searchValue" placeholder="Search by Location Name" type="text">
-    </div>
+  <div class="search">
+    <input ng-model="searchValue" placeholder="Filter by Name" type="text">
   </div>
   <div ng-show="groupLabel" class="label label-distance">
     <span class="label-search-query">{{groupLabel}}</span>
-    <a class="label-close" href="#"><i class="icon-cancel-circle" ng-click="unGroup()"></i></a>
+    <a class="label-close" href="#"><span class="icon-close" ng-click="unGroup()"></span></a>
   </div>
   <div class="sidebar-listings">
     <div ng-repeat="item in (sortedData = (locations.data | orderBy:sortField))">

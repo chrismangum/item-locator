@@ -27,6 +27,7 @@ class Map extends google.maps.Map
       #required properties:
       center: new LatLng '39.8282', '-98.5795'
       zoom: 5
+      panControl: false
 
   calcDistance: (start, end) ->
     dist = google.maps.geometry.spherical.computeDistanceBetween start, end
@@ -125,9 +126,7 @@ app.directive 'map', ['$map', '$compile', ($map, $compile) ->
   replace: true
   scope:
     locations: '='
-  template: '<div class="map-wrapper">
-    <div class="map" id="map-canvas"></div>
-  </div>'
+  template: '<div class="map"><div class="map-canvas" id="map-canvas"></div></div>'
   link: (scope, element, attrs) ->
     pinClick = false
 

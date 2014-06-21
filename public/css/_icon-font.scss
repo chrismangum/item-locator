@@ -1,0 +1,95 @@
+@font-face {
+  font-family: "icon-font";
+  src: url('../../../fonts/icon-font.eot');
+  src: url('../../../fonts/icon-font.eot?#iefix') format('eot'),
+    url('../../../fonts/icon-font.woff') format('woff'),
+    url('../../../fonts/icon-font.ttf') format('truetype'),
+    url('../../../fonts/icon-font.svg#icon-font') format('svg');
+}
+
+%icon {
+  position: relative;
+  display:inline-block;
+  font-family:"icon-font";
+  font-style:normal;
+  font-weight:normal;
+  line-height:1;
+  speak:none;
+  text-decoration:inherit;
+  text-transform:none;
+  text-rendering:optimizeLegibility;
+  vertical-align:middle;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+@function icon-char($filename) {
+  $char: "";
+
+  @if $filename == arrow {
+    $char: "\E001";
+  }
+  @if $filename == close {
+    $char: "\E002";
+  }
+  @if $filename == menu {
+    $char: "\E003";
+  }
+  @if $filename == search {
+    $char: "\E004";
+  }
+
+  @return $char;
+}
+
+@mixin icon($filename) {
+  content: icon-char($filename);
+}
+
+
+.icon-arrow{
+  @extend %icon;
+  &:before {
+    @include icon(arrow);
+  }
+}
+%icon-arrow {
+  @extend %icon;
+  @include icon(arrow);
+}
+
+
+.icon-close{
+  @extend %icon;
+  &:before {
+    @include icon(close);
+  }
+}
+%icon-close {
+  @extend %icon;
+  @include icon(close);
+}
+
+
+.icon-menu{
+  @extend %icon;
+  &:before {
+    @include icon(menu);
+  }
+}
+%icon-menu {
+  @extend %icon;
+  @include icon(menu);
+}
+
+
+.icon-search{
+  @extend %icon;
+  &:before {
+    @include icon(search);
+  }
+}
+%icon-search {
+  @extend %icon;
+  @include icon(search);
+}
