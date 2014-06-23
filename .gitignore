@@ -3,3 +3,6 @@ public/vendor
 public/js/*.js
 .sass-cache
 node_modules/*
+public/fonts/icon-font.eot
+public/fonts/icon-font.ttf
+public/fonts/icon-font.woff
