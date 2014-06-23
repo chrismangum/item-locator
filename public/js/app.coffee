@@ -35,7 +35,7 @@ class Map extends google.maps.Map
     Math.round dist * 0.000621371 #convert meters to miles and round
 
   fitBounds: (bounds) ->
-    if bounds.length
+    if _.isArray bounds
       super @_genMarkerBounds bounds
     else
       super bounds
@@ -63,8 +63,6 @@ class Map extends google.maps.Map
 
   on: (event, context, callback) ->
     google.maps.event.addListener context, event, callback
-
-
 
 app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
   ($scope, $sce, $map, $locations) ->
@@ -153,7 +151,7 @@ app.directive 'map', ['$map', '$compile', ($map, $compile) ->
     filterMarkers = (data) ->
       markers = _.pluck data, 'marker'
       for marker in $map.map.markers
-        marker.setVisible markers.indexOf(marker) isnt -1
+        marker.setVisible _.contains markers, marker
 
     scope.locations.activateItemCallback = ->
       infoWindow.update()
