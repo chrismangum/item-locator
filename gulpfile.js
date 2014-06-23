@@ -3,7 +3,8 @@ var gulp = require('gulp'),
 
 var paths = {
   js: 'public/js/*.coffee',
-  scss: 'public/css/*.scss'
+  scss: 'public/css/*.scss',
+  jade: 'views/*.jade'
 };
 
 gulp.task('scripts', function () {
@@ -37,6 +38,14 @@ gulp.task('iconfont', function(){
     .pipe(gulp.dest('public/fonts/'))
 });
 
+gulp.task('jade', function () {
+  gulp.src(paths.jade)
+    .pipe(plugin.jade({
+      pretty: true
+    }))
+    .pipe(gulp.dest('public/'));
+});
+
 gulp.task('nodemon', function () {
   plugin.nodemon({
     script: 'server/app.js',
@@ -48,7 +57,8 @@ gulp.task('nodemon', function () {
 gulp.task('watch', function () {
   gulp.watch(paths.js, ['scripts']);
   gulp.watch(paths.scss, ['css']);
+  gulp.watch(paths.jade, ['jade']);
 });
 
-gulp.task('default', ['scripts', 'css', 'watch', 'nodemon']);
+gulp.task('default', ['scripts', 'jade', 'css', 'watch', 'nodemon']);
 gulp.task('heroku:development', ['scripts']);

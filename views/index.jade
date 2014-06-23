@@ -1,0 +1,30 @@
+doctype html
+html(lang='en', ng-app='app')
+  head
+    title Item Locator
+    link(rel='shortcut icon', href='favicon.png')
+    meta(name='robots', content='noindex, nofollow')
+    link(rel='stylesheet', href='css/styles.css')
+  body(ng-controller='mainCtrl')
+    header.item-locator-header
+      button.toggle-sidebar
+        span.icon-menu
+      .logo
+        img(src='images/logo.png')
+    .item-locator
+      .map-container
+        .search
+          form#location-search(ng-submit='locationSearch()')
+            input(ng-model='searchAddress', autofocus='autofocus', placeholder='City, ST', type='text')
+        map(locations='locations')
+      list(locations='locations', group-label='groupLabel', sort-field='sortField', get-label='getLabel(data, i)')
+        .listing-info
+          .info-name {{item.name}}{{item.isActive ? '*' : ''}}
+          .info-address1 {{item.address}}
+          .info-address2 {{item.city}}, {{item.state}} {{item.zip}}
+    script(src='http://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=false')
+    script(src='/vendor/jquery/dist/jquery.min.js')
+    script(src='/vendor/lodash/dist/lodash.min.js')
+    script(src='/vendor/angular/angular.js')
+    script(src='js/app.min.js')
+    script(src='js/temp.js')
