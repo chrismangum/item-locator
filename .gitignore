@@ -1,6 +1,5 @@
 public/vendor
 *.min.js
-public/js/*.js
 .sass-cache
 node_modules/*
 public/fonts/icon-font.eot
