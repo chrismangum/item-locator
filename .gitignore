@@ -2,6 +2,7 @@ public/vendor
 *.min.js
 .sass-cache
 node_modules/*
+public/*.html
 public/fonts/icon-font.eot
 public/fonts/icon-font.ttf
 public/fonts/icon-font.woff
