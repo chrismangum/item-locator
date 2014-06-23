@@ -19,9 +19,9 @@ html(lang='en', ng-app='app')
         map(locations='locations')
       list(locations='locations', group-label='groupLabel', sort-field='sortField', get-label='getLabel(data, i)')
         .listing-info
-          .info-name {{item.name}}{{item.isActive ? '*' : ''}}
-          .info-address1 {{item.address}}
-          .info-address2 {{item.city}}, {{item.state}} {{item.zip}}
+          .info-name {{ item.name }}{{ item.isActive ? '*' : '' }}
+          .info-address1 {{ item.address }}
+          .info-address2 {{ item.city }}, {{ item.state }} {{ item.zip }}
     script(src='http://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=false')
     script(src='/vendor/jquery/dist/jquery.min.js')
     script(src='/vendor/lodash/dist/lodash.min.js')
