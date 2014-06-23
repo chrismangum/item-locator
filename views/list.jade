@@ -1,12 +1,12 @@
 .sidebar
   .search
     input(ng-model='searchValue', placeholder='Filter by Name', type='text')
-  .label.label-distance(ng-show='groupLabel')
-    span.label-search-query {{groupLabel}}
+  .label.label-distance(ng-show='data.groupLabel')
+    span.label-search-query {{data.groupLabel}}
     a.label-close(href='#')
       span.icon-close(ng-click='unGroup()')
   .sidebar-listings
-    div(ng-repeat='item in (sortedData = (locations.data | orderBy:sortField))')
-      div(ng-if='groupLabel', ng-bind-html='getLabel({data: sortedData, i: $index})')
+    div(ng-repeat='item in (sortedData = (locations.data | orderBy:data.sortField))')
+      div(ng-if='data.groupLabel', ng-bind-html='getLabel(sortedData, $index)')
       a.sidebar-listing(activate-item='item', ng-transclude='ng-transclude')
 

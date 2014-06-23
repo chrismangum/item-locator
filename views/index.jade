@@ -12,12 +12,13 @@ html(lang='en', ng-app='app')
       .logo
         img(src='images/logo.png')
     .item-locator
-      .map-container
+      .map-container(ng-controller="map")
         .search
           form#location-search(ng-submit='locationSearch()')
             input(ng-model='searchAddress', autofocus='autofocus', placeholder='City, ST', type='text')
-        map(locations='locations')
-      list(locations='locations', group-label='groupLabel', sort-field='sortField', get-label='getLabel(data, i)')
+        .map
+          .map-canvas#map-canvas
+      list
         .listing-info
           .info-name {{ item.name }}{{ item.isActive ? '*' : '' }}
           .info-address1 {{ item.address }}

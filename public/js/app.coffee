@@ -1,6 +1,133 @@
 app = angular.module 'app', []
 LatLng = google.maps.LatLng
 
+app.controller 'mainCtrl', ['$scope', '$locations'
+  ($scope, $locations) ->
+    $scope.locations = $locations
+    $scope.data =
+      sortField: 'name'
+      groupLabel: ''
+
+    $scope.safeApply = (fn) ->
+      unless $scope.$$phase
+        $scope.apply fn
+
+    $locations.get 'clients.json'
+]
+
+app.directive 'activateItem', ['$locations', ($locations) ->
+  ($scope, el, attrs) ->
+    el.on 'click', ->
+      $locations.activateItem $scope.$eval attrs.activateItem
+]
+
+app.directive 'infoWindow', ->
+  restrict: 'E'
+  templateUrl: 'info-window.html'
+
+app.directive 'list', ['$locations', '$sce', ($locations, $sce) ->
+  restrict: 'E'
+  transclude: true
+  scope: true
+  templateUrl: 'list.html'
+  replace: true
+  link: ($scope) ->
+    $scope.getLabel = (locations, i) ->
+      distance = _.find [500, 250, 100, 50, 20, 10, 5, 1], (dist) ->
+        locations[i].distance >= dist and (not i or locations[i - 1].distance < dist)
+      if distance
+        string = "<div class='label label-miles'>#{ distance }+ Miles</div>"
+      $sce.trustAsHtml string
+
+    $scope.unGroup = ->
+      $scope.data.groupLabel = ''
+      $scope.data.sortField = 'name'
+
+    $scope.$watch 'searchValue', (n, o) ->
+      if n isnt o
+        $locations.filterData name: n
+]
+
+app.controller 'map', ['$scope', '$compile', '$locations'
+  ($scope, $compile, $locations) ->
+    pinClick = false
+    map = new Map $('#map-canvas')[0]
+    infoWindow = new InfoWindow $compile('<info-window></info-window>')($scope)[0], map
+
+    map.on 'closeclick', infoWindow, ->
+      $locations.deactivateItem true
+
+    filterMarkers = (data) ->
+      markers = _.pluck data, 'marker'
+      for marker in map.markers
+        marker.setVisible _.contains markers, marker
+
+    $locations.activateItemCallback = ->
+      infoWindow.update()
+
+    calcDistances = (searchPoint) ->
+      for loc in $locations.data
+        loc.distance = map.calcDistance searchPoint, new LatLng loc.lat, loc.lng
+
+    $scope.locationSearch = ->
+      if $scope.searchAddress
+        map.locationSearch $scope.searchAddress, (result) ->
+          $locations.unfilterData()
+          calcDistances result.geometry.location
+          $scope.data.sortField = 'distance'
+          $scope.data.groupLabel = "Distance from \"#{ result.formatted_address }\""
+          $scope.safeApply()
+      else
+        $scope.data.sortField = 'name'
+        $scope.data.groupLabel = ''
+
+    $scope.$watch (->
+      $locations.activeItem
+    ), (item) ->
+      if item
+        unless pinClick
+          map.setCenter item.marker.position
+        infoWindow.open item.marker
+
+    $scope.$watch (->
+      $locations.data
+    ), (n, o) ->
+      if n
+        if o
+          filterMarkers n
+        else
+          map.genMarkers n, ->
+            pinClick = true
+            $locations.activateItem @data
+            pinClick = false
+]
+
+app.factory '$locations', ['$rootScope', '$http', '$filter'
+  ($rootScope, $http, $filter) ->
+    activateItem: (item) ->
+      @deactivateItem()
+      @activeItem = item
+      @activeItem.isActive = true
+      $rootScope.$apply()
+      @activateItemCallback?()
+
+    deactivateItem: (apply) ->
+      @activeItem?.isActive = false
+      @activeItem = null
+      $rootScope.$apply() if apply
+
+    filterData: (filterVal) ->
+      @data = $filter('filter') @_pristineData, filterVal
+
+    get: (url) ->
+      $http.get(url).then (response) =>
+        @_pristineData = response.data
+        @unfilterData()
+
+    unfilterData: ->
+      @data = @_pristineData
+]
+
 class Geocoder extends google.maps.Geocoder
   geocode: (address, map, callback) ->
     super 'address': address, (results, status) ->
@@ -63,136 +190,3 @@ class Map extends google.maps.Map
 
   on: (event, context, callback) ->
     google.maps.event.addListener context, event, callback
-
-app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
-  ($scope, $sce, $map, $locations) ->
-    $scope.locations = $locations
-    $scope.sortField = 'name'
-
-    $scope.getLabel = (locations, i) ->
-      distance = _.find [500, 250, 100, 50, 20, 10, 5, 1], (dist) ->
-        locations[i].distance >= dist and (not i or locations[i - 1].distance < dist)
-      if distance
-        string = "<div class='label label-miles'>#{distance}+ Miles</div>"
-      $sce.trustAsHtml string
-
-    calcDistances = (searchPoint) ->
-      for loc in $locations.data
-        loc.distance = $map.map.calcDistance searchPoint, new LatLng loc.lat, loc.lng
-
-    $scope.locationSearch = ->
-      if $scope.searchAddress
-        $map.map.locationSearch $scope.searchAddress, (result) ->
-          $locations.unfilterData()
-          calcDistances result.geometry.location
-          $scope.sortField = 'distance'
-          $scope.groupLabel = "Distance from \"#{result.formatted_address}\""
-          $scope.$apply()
-      else
-        $scope.sortField = 'name'
-        $scope.groupLabel = ''
-
-    $locations.get 'clients.json'
-]
-
-app.directive 'activateItem', ->
-  ($scope, el, attrs) ->
-    el.on 'click', ->
-      $scope.locations.activateItem attrs.activateItem
-
-app.directive 'infoWindow', ->
-  restrict: 'E'
-  templateUrl: 'info-window.html'
-
-app.directive 'list', ['$filter', ($filter) ->
-  restrict: 'E'
-  transclude: true
-  scope:
-    getLabel: '&'
-    groupLabel: '='
-    locations: '='
-    sortField: '='
-  replace: true
-  templateUrl: 'list.html'
-  link: ($scope) ->
-    originalSort = $scope.sortField
-
-    $scope.$watch 'searchValue', (n, o) ->
-      if n isnt o
-        $scope.locations.filterData name: n
-
-    $scope.unGroup = ->
-      $scope.groupLabel = ''
-      $scope.sortField = originalSort
-]
-
-app.directive 'map', ['$map', '$compile', ($map, $compile) ->
-  restrict: 'E'
-  replace: true
-  scope:
-    locations: '='
-  template: '<div class="map"><div class="map-canvas" id="map-canvas"></div></div>'
-  link: ($scope, element, attrs) ->
-    pinClick = false
-
-    $map.init element.children()[0]
-    infoWindow = new InfoWindow $compile('<info-window></info-window>')($scope)[0], $map.map
-
-    $map.map.on 'closeclick', infoWindow, ->
-      $scope.locations.deactivateItem true
-
-    $scope.$watch 'locations.activeItem', (item) ->
-      if item
-        unless pinClick
-          $map.map.setCenter item.marker.position
-        infoWindow.open item.marker
-
-    filterMarkers = (data) ->
-      markers = _.pluck data, 'marker'
-      for marker in $map.map.markers
-        marker.setVisible _.contains markers, marker
-
-    $scope.locations.activateItemCallback = ->
-      infoWindow.update()
-
-    $scope.$watch 'locations.data', (n, o) ->
-      if n
-        if o
-          filterMarkers n
-        else
-          $map.map.genMarkers n, ->
-            pinClick = true
-            $scope.locations.activateItem @data
-            pinClick = false
-]
-
-app.factory '$locations', ['$rootScope', '$http', '$filter'
-  ($rootScope, $http, $filter) ->
-
-    activateItem: (item) ->
-      @deactivateItem()
-      @activeItem = item
-      @activeItem.isActive = true
-      $rootScope.$apply()
-      @activateItemCallback?()
-
-    deactivateItem: (apply) ->
-      @activeItem?.isActive = false
-      @activeItem = null
-      $rootScope.$apply() if apply
-
-    filterData: (filterVal) ->
-      @data = $filter('filter') @_pristineData, filterVal
-
-    get: (url) ->
-      $http.get(url).then (response) =>
-        @_pristineData = response.data
-        @unfilterData()
-
-    unfilterData: ->
-      @data = @_pristineData
-]
-
-app.factory '$map', ->
-  init: (element) ->
-    @map = new Map element
