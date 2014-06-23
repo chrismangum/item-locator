@@ -28,6 +28,7 @@ class Map extends google.maps.Map
       center: new LatLng '39.8282', '-98.5795'
       zoom: 5
       panControl: false
+    @geocoder = new Geocoder()
 
   calcDistance: (start, end) ->
     dist = google.maps.geometry.spherical.computeDistanceBetween start, end
@@ -46,7 +47,7 @@ class Map extends google.maps.Map
     bounds
 
   genMarkers: (data, eventHandler) ->
-    _.map data, (loc, i) =>
+    @markers = _.map data, (loc, i) =>
       marker = new google.maps.Marker
         map: @
         position: new LatLng loc.lat, loc.lng
@@ -54,9 +55,15 @@ class Map extends google.maps.Map
       @on 'click', marker, eventHandler
       loc.marker = marker
       marker
+    @fitBounds @markers
+
+  locationSearch: (address, callback) ->
+    @geocoder.geocode address, @, (result) ->
+      callback result
 
   on: (event, context, callback) ->
     google.maps.event.addListener context, event, callback
+
 
 
 app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
@@ -78,11 +85,12 @@ app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
 
     $scope.locationSearch = ->
       if $scope.searchAddress
-        $map.locationSearch $scope.searchAddress, (result) ->
+        $map.map.locationSearch $scope.searchAddress, (result) ->
           $locations.unfilterData()
           calcDistances result.geometry.location
           $scope.sortField = 'distance'
           $scope.groupLabel = "Distance from \"#{result.formatted_address}\""
+          $scope.$apply()
       else
         $scope.sortField = 'name'
         $scope.groupLabel = ''
@@ -144,7 +152,7 @@ app.directive 'map', ['$map', '$compile', ($map, $compile) ->
 
     filterMarkers = (data) ->
       markers = _.pluck data, 'marker'
-      for marker in $map.markers
+      for marker in $map.map.markers
         marker.setVisible markers.indexOf(marker) isnt -1
 
     scope.locations.activateItemCallback = ->
@@ -155,7 +163,7 @@ app.directive 'map', ['$map', '$compile', ($map, $compile) ->
         if oldData
           filterMarkers newData
         else
-          $map.genMarkers newData, ->
+          $map.map.genMarkers newData, ->
             pinClick = true
             scope.locations.activateItem @data
             pinClick = false
@@ -188,18 +196,6 @@ app.factory '$locations', ['$rootScope', '$http', '$filter'
       @data = @_pristineData
 ]
 
-app.factory '$map', ['$rootScope', ($rootScope) ->
-  geocoder = new Geocoder()
-
-  genMarkers: (data, eventHandler) ->
-    @markers = @map.genMarkers data, eventHandler
-    @map.fitBounds @markers
-
+app.factory '$map', ->
   init: (element) ->
     @map = new Map element
-
-  locationSearch: (address, callback) ->
-    geocoder.geocode address, @map, (result) ->
-      callback result
-      $rootScope.$apply()
-]
