@@ -7,12 +7,12 @@ html(lang='en', ng-app='app')
     link(rel='stylesheet', href='css/styles.css')
   body(ng-controller='mainCtrl')
     header.item-locator-header
-      button.toggle-sidebar
+      button.toggle-sidebar(ng-click="data.listOpen = !data.listOpen")
         span.icon-menu
       .logo
         img(src='images/logo.png')
-    .item-locator
-      .map-container(ng-controller="map")
+    .item-locator(ng-class="{open: data.listOpen}")
+      .map-container(ng-controller="map", ng-click="hideMobileList()")
         .search
           form#location-search(ng-submit='locationSearch()')
             input(ng-model='searchAddress', autofocus='autofocus', placeholder='City, ST', type='text')
@@ -28,4 +28,3 @@ html(lang='en', ng-app='app')
     script(src='/vendor/lodash/dist/lodash.min.js')
     script(src='/vendor/angular/angular.js')
     script(src='js/app.min.js')
-    script(src='js/temp.js')

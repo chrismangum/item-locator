@@ -7,6 +7,11 @@ app.controller 'mainCtrl', ['$scope', '$locations'
     $scope.data =
       sortField: 'name'
       groupLabel: ''
+      listOpen: false
+
+    $scope.hideMobileList = ->
+      if window.innerWidth < 800
+        $scope.data.listOpen = false
 
     $scope.safeApply = (fn) ->
       unless $scope.$$phase
@@ -18,6 +23,7 @@ app.controller 'mainCtrl', ['$scope', '$locations'
 app.directive 'activateItem', ['$locations', ($locations) ->
   ($scope, el, attrs) ->
     el.on 'click', ->
+      $scope.hideMobileList()
       $locations.activateItem $scope.$eval attrs.activateItem
 ]
 
