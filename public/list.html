@@ -1,15 +1,12 @@
+
 <div class="sidebar">
   <div class="search">
-    <input ng-model="searchValue" placeholder="Filter by Name" type="text">
+    <input ng-model="searchValue" placeholder="Filter by Name" type="text"/>
   </div>
-  <div ng-show="groupLabel" class="label label-distance">
-    <span class="label-search-query">{{groupLabel}}</span>
-    <a class="label-close" href="#"><span class="icon-close" ng-click="unGroup()"></span></a>
-  </div>
+  <div ng-show="groupLabel" class="label label-distance"><span class="label-search-query">{{groupLabel}}</span><a href="#" class="label-close"><span ng-click="unGroup()" class="icon-close"></span></a></div>
   <div class="sidebar-listings">
     <div ng-repeat="item in (sortedData = (locations.data | orderBy:sortField))">
-      <div ng-if="groupLabel" ng-bind-html="getLabel({data: sortedData, i: $index})"></div>
-      <a activate-item="item" class="sidebar-listing" ng-transclude></a>
+      <div ng-if="groupLabel" ng-bind-html="getLabel({data: sortedData, i: $index})"></div><a activate-item="item" ng-transclude="ng-transclude" class="sidebar-listing"></a>
     </div>
   </div>
 </div>

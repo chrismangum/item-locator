@@ -1,9 +1,7 @@
+
 <div class="info-window">
   <div class="basic-info">
-    <div class="info-name">
-      <a ng-if="locations.activeItem.website" target="_blank" ng-href="{{locations.activeItem.website}}">{{locations.activeItem.name}}</a>
-      <span ng-if="!locations.activeItem.website">{{locations.activeItem.name}}</span>
-    </div>
+    <div class="info-name"><a ng-if="locations.activeItem.website" target="_blank" ng-href="{{locations.activeItem.website}}">{{locations.activeItem.name}}</a><span ng-if="!locations.activeItem.website">{{locations.activeItem.name}}</span></div>
     <div class="info-address1">{{locations.activeItem.address}}</div>
     <div class="info-address2">{{locations.activeItem.city}} {{locations.activeItem.state}} {{locations.activeItem.zip}}</div>
   </div>

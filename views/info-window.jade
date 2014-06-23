@@ -1,0 +1,13 @@
+.info-window
+  .basic-info
+    .info-name
+      a(ng-if='locations.activeItem.website', target='_blank', ng-href='{{locations.activeItem.website}}') {{locations.activeItem.name}}
+      span(ng-if='!locations.activeItem.website') {{locations.activeItem.name}}
+    .info-address1 {{locations.activeItem.address}}
+    .info-address2
+      | {{locations.activeItem.city}} {{locations.activeItem.state}} {{locations.activeItem.zip}}
+  .more-info
+    .filter-info-wrapper
+      .label Phone
+      .filter-info {{locations.activeItem.phone}}
+
