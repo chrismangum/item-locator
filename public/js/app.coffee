@@ -10,7 +10,7 @@ app.controller 'mainCtrl', ['$scope', '$locations'
 
     $scope.safeApply = (fn) ->
       unless $scope.$$phase
-        $scope.apply fn
+        $scope.$apply fn
 
     $locations.get 'clients.json'
 ]
