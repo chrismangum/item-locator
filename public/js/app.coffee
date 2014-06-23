@@ -66,7 +66,6 @@ class Map extends google.maps.Map
 
 app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
   ($scope, $sce, $map, $locations) ->
-
     $scope.locations = $locations
     $scope.sortField = 'name'
 
@@ -97,9 +96,9 @@ app.controller 'mainCtrl', ['$scope', '$sce', '$map', '$locations'
 ]
 
 app.directive 'activateItem', ->
-  (scope, el, attrs) ->
+  ($scope, el, attrs) ->
     el.on 'click', ->
-      scope.locations.activateItem scope.$apply attrs.activateItem
+      $scope.locations.activateItem attrs.activateItem
 
 app.directive 'infoWindow', ->
   restrict: 'E'
@@ -115,16 +114,16 @@ app.directive 'list', ['$filter', ($filter) ->
     sortField: '='
   replace: true
   templateUrl: 'list.html'
-  link: (scope) ->
-    originalSort = scope.sortField
+  link: ($scope) ->
+    originalSort = $scope.sortField
 
-    scope.$watch 'searchValue', (newVal, oldVal) ->
-      if newVal isnt oldVal
-        scope.locations.filterData name: newVal
+    $scope.$watch 'searchValue', (n, o) ->
+      if n isnt o
+        $scope.locations.filterData name: n
 
-    scope.unGroup = ->
-      scope.groupLabel = ''
-      scope.sortField = originalSort
+    $scope.unGroup = ->
+      $scope.groupLabel = ''
+      $scope.sortField = originalSort
 ]
 
 app.directive 'map', ['$map', '$compile', ($map, $compile) ->
@@ -133,16 +132,16 @@ app.directive 'map', ['$map', '$compile', ($map, $compile) ->
   scope:
     locations: '='
   template: '<div class="map"><div class="map-canvas" id="map-canvas"></div></div>'
-  link: (scope, element, attrs) ->
+  link: ($scope, element, attrs) ->
     pinClick = false
 
     $map.init element.children()[0]
-    infoWindow = new InfoWindow $compile('<info-window></info-window>')(scope)[0], $map.map
+    infoWindow = new InfoWindow $compile('<info-window></info-window>')($scope)[0], $map.map
 
     $map.map.on 'closeclick', infoWindow, ->
-      scope.locations.deactivateItem true
+      $scope.locations.deactivateItem true
 
-    scope.$watch 'locations.activeItem', (item) ->
+    $scope.$watch 'locations.activeItem', (item) ->
       if item
         unless pinClick
           $map.map.setCenter item.marker.position
@@ -153,17 +152,17 @@ app.directive 'map', ['$map', '$compile', ($map, $compile) ->
       for marker in $map.map.markers
         marker.setVisible _.contains markers, marker
 
-    scope.locations.activateItemCallback = ->
+    $scope.locations.activateItemCallback = ->
       infoWindow.update()
 
-    scope.$watch 'locations.data', (newData, oldData) ->
-      if newData
-        if oldData
-          filterMarkers newData
+    $scope.$watch 'locations.data', (n, o) ->
+      if n
+        if o
+          filterMarkers n
         else
-          $map.map.genMarkers newData, ->
+          $map.map.genMarkers n, ->
             pinClick = true
-            scope.locations.activateItem @data
+            $scope.locations.activateItem @data
             pinClick = false
 ]
 
