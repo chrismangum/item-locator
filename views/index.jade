@@ -24,7 +24,6 @@ html(lang='en', ng-app='app')
           .info-address1 {{ item.address }}
           .info-address2 {{ item.city }}, {{ item.state }} {{ item.zip }}
     script(src='http://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=false')
-    script(src='/vendor/jquery/dist/jquery.min.js')
-    script(src='/vendor/lodash/dist/lodash.min.js')
-    script(src='/vendor/angular/angular.js')
-    script(src='js/app.min.js')
+    //bower:js
+    //endbower
+    script(src='js/app.js')

@@ -1,17 +1,20 @@
 var gulp = require('gulp'),
-  plugin = require('gulp-load-plugins')({camelize:true});
+  plugin = require('gulp-load-plugins')({
+    camelize: true
+  }),
+  wiredep = require('wiredep').stream;
 
 var paths = {
   js: 'public/js/*.coffee',
   scss: 'public/css/*.scss',
-  jade: 'views/*.jade'
+  jade: 'views/*.jade',
+  index: 'public/index.html'
 };
 
 gulp.task('scripts', function () {
   return gulp.src(paths.js)
     .pipe(plugin.coffee())
-    //.pipe(plugin.uglify())
-    .pipe(plugin.concat('app.min.js'))
+    .pipe(plugin.uglify())
     .pipe(gulp.dest('public/js'));
 });
 
@@ -46,6 +49,20 @@ gulp.task('jade', function () {
     .pipe(gulp.dest('public/'));
 });
 
+gulp.task('wiredep', function () {
+  gulp.src(paths.index)
+    .pipe(wiredep({
+      fileTypes: {
+        html: {
+          replace: {
+            js: '<script src="/{{filePath}}"></script>'
+          }
+        }
+      }
+    }))
+    .pipe(gulp.dest('./public'));
+});
+
 gulp.task('nodemon', function () {
   plugin.nodemon({
     script: 'server/app.js',
@@ -58,6 +75,7 @@ gulp.task('watch', function () {
   gulp.watch(paths.js, ['scripts']);
   gulp.watch(paths.scss, ['css']);
   gulp.watch(paths.jade, ['jade']);
+  gulp.watch(paths.index, ['wiredep']);
 });
 
 gulp.task('default', ['scripts', 'jade', 'css', 'watch', 'nodemon']);
