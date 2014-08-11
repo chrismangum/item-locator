@@ -14,7 +14,7 @@ var paths = {
 gulp.task('scripts', function () {
   return gulp.src(paths.js)
     .pipe(plugin.coffee())
-    //.pipe(plugin.uglify())
+    .pipe(plugin.uglify())
     .pipe(gulp.dest('public/js'));
 });
 

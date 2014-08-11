@@ -39,19 +39,19 @@ app.directive 'list', ['$locations', '$sce', ($locations, $sce) ->
   replace: true
   link: ($scope) ->
     $scope.getLabel = (locations, i) ->
-      for dist in [500, 250, 100, 50, 20, 10, 5, 1]
-        if locations[i].distance >= dist and
-          (i is 0 or locations[i - 1].distance < dist)
-            string = "<div class='label label-miles'>#{ distance }+ Miles</div>"
-            break
+      distance = _.find [500, 250, 100, 50, 20, 10, 5, 1], (dist) ->
+        locations[i].distance >= dist and (not i or locations[i - 1].distance < dist)
+      if distance
+        string = "<div class='label label-miles'>#{ distance }+ Miles</div>"
       $sce.trustAsHtml string
 
     $scope.unGroup = ->
       $scope.data.groupLabel = ''
       $scope.data.sortField = 'name'
 
-    $scope.$watch 'searchValue', (n) ->
-      $locations.filterData name: n
+    $scope.$watch 'searchValue', (n, o) ->
+      if n isnt o
+        $locations.filterData name: n
 ]
 
 app.controller 'map', ['$scope', '$compile', '$locations'
@@ -64,9 +64,9 @@ app.controller 'map', ['$scope', '$compile', '$locations'
       $locations.deactivateItem true
 
     filterMarkers = (data) ->
-      markers = (item.marker for item in data)
+      markers = _.pluck data, 'marker'
       for marker in map.markers
-        marker.setVisible marker in markers
+        marker.setVisible _.contains markers, marker
 
     $locations.activateItemCallback = ->
       infoWindow.update()
@@ -180,7 +180,7 @@ class Map extends google.maps.Map
     bounds
 
   genMarkers: (data, eventHandler) ->
-    @markers = for loc, i in data
+    @markers = _.map data, (loc, i) =>
       marker = new google.maps.Marker
         map: @
         position: new LatLng loc.lat, loc.lng
