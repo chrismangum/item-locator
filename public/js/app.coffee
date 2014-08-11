@@ -50,8 +50,7 @@ app.directive 'list', ['$locations', '$sce', ($locations, $sce) ->
       $scope.data.sortField = 'name'
 
     $scope.$watch 'searchValue', (n, o) ->
-      if n isnt o
-        $locations.filterData name: n
+      $locations.filterData name: n
 ]
 
 app.controller 'map', ['$scope', '$compile', '$locations'
