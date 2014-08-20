@@ -31,13 +31,8 @@ app.directive 'infoWindow', ->
   restrict: 'E'
   templateUrl: 'info-window.html'
 
-app.directive 'list', ['$locations', '$sce', ($locations, $sce) ->
-  restrict: 'E'
-  transclude: true
-  scope: true
-  templateUrl: 'list.html'
-  replace: true
-  link: ($scope) ->
+app.controller 'list', ['$scope', '$locations', '$sce',
+  ($scope, $locations, $sce) ->
     $scope.getLabel = (locations, i) ->
       distance = _.find [500, 250, 100, 50, 20, 10, 5, 1], (dist) ->
         locations[i].distance >= dist and (not i or locations[i - 1].distance < dist)
@@ -51,7 +46,7 @@ app.directive 'list', ['$locations', '$sce', ($locations, $sce) ->
 
     $scope.$watch 'searchValue', (n, o) ->
       $locations.filterData name: n
-]
+  ]
 
 app.controller 'map', ['$scope', '$compile', '$locations'
   ($scope, $compile, $locations) ->

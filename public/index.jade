@@ -18,11 +18,21 @@ html(lang='en', ng-app='app')
             input(ng-model='searchAddress', autofocus='autofocus', placeholder='City, ST', type='text')
         .map
           .map-canvas#map-canvas
-      list
-        .listing-info
-          .info-name {{ item.name }}{{ item.isActive ? '*' : '' }}
-          .info-address1 {{ item.address }}
-          .info-address2 {{ item.city }}, {{ item.state }} {{ item.zip }}
+      .sidebar
+        .search
+          input(ng-model='searchValue', placeholder='Filter by Name', type='text')
+        .label.label-distance(ng-show='data.groupLabel')
+          span.label-search-query {{data.groupLabel}}
+          a.label-close(href='#')
+            span.icon-close(ng-click='unGroup()')
+        .sidebar-listings
+          div(ng-repeat='item in (sortedData = (locations.data | orderBy:data.sortField))')
+            div(ng-if='data.groupLabel', ng-bind-html='getLabel(sortedData, $index)')
+            a.sidebar-listing(activate-item='item')
+              .listing-info
+                .info-name {{ item.name }}{{ item.isActive ? '*' : '' }}
+                .info-address1 {{ item.address }}
+                .info-address2 {{ item.city }}, {{ item.state }} {{ item.zip }}
     script(src='http://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=false')
     //bower:js
     //endbower
