@@ -1,39 +1,39 @@
 doctype html
-html(lang='en', ng-app='app')
+html(lang="en", ng-app="app")
   head
     title Item Locator
-    link(rel='shortcut icon', href='favicon.png')
-    meta(name='robots', content='noindex, nofollow')
-    link(rel='stylesheet', href='css/styles.css')
-  body(ng-controller='mainCtrl')
+    link(rel="shortcut icon", href="favicon.png")
+    meta(name="robots", content="noindex, nofollow")
+    link(rel="stylesheet", href="css/styles.css")
+  body(ng-controller="mainCtrl")
     header.item-locator-header
-      button.toggle-sidebar(ng-click="data.listOpen = !data.listOpen")
+      button.toggle-sidebar(ng-click="listOpen = !listOpen")
         span.icon-menu
       .logo
-        img(src='images/logo.png')
-    .item-locator(ng-class="{open: data.listOpen}")
+        img(src="images/logo.png")
+    .item-locator(ng-class="{open: listOpen}")
       .map-container(ng-controller="map", ng-click="hideMobileList()")
         .search
-          form#location-search(ng-submit='locationSearch()')
-            input(ng-model='searchAddress', autofocus='autofocus', placeholder='City, ST', type='text')
+          form#location-search(ng-submit="locationSearch()")
+            input(ng-model="searchAddress", autofocus="autofocus", placeholder="City, ST", type="text")
         .map
           .map-canvas#map-canvas
       .sidebar
         .search
-          input(ng-model='searchValue', placeholder='Filter by Name', type='text')
-        .label.label-distance(ng-show='data.groupLabel')
+          input(ng-model="searchValue", placeholder="Filter by Name", type="text")
+        .label.label-distance(ng-show="data.groupLabel")
           span.label-search-query {{data.groupLabel}}
-          a.label-close(href='#')
-            span.icon-close(ng-click='unGroup()')
+          a.label-close(href="#")
+            span.icon-close(ng-click="unGroup()")
         .sidebar-listings
-          div(ng-repeat='item in (sortedData = (locations.data | orderBy:data.sortField))')
-            div(ng-if='data.groupLabel', ng-bind-html='getLabel(sortedData, $index)')
-            a.sidebar-listing(activate-item='item')
+          div(ng-repeat="item in (sortedData = (locations.data | orderBy:data.sortField))")
+            div(ng-if="data.groupLabel", ng-bind-html="getLabel(sortedData, $index)")
+            a.sidebar-listing(ng-click="locations.activateItem(item)")
               .listing-info
                 .info-name {{ item.name }}{{ item.isActive ? '*' : '' }}
                 .info-address1 {{ item.address }}
                 .info-address2 {{ item.city }}, {{ item.state }} {{ item.zip }}
-    script(src='http://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=false')
+    script(src="http://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=false")
     //bower:js
     //endbower
-    script(src='js/app.js')
+    script(src="js/app.js")
