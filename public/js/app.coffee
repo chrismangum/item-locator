@@ -1,8 +1,8 @@
 app = angular.module 'app', []
 LatLng = google.maps.LatLng
 
-app.controller 'mainCtrl', ['$scope', '$locations', '$sce',
-  ($scope, $locations, $sce) ->
+app.controller 'mainCtrl', ['$scope', '$locations', '$sce', '$window'
+  ($scope, $locations, $sce, $window) ->
     $scope.locations = $locations
 
     $scope.data =
@@ -24,7 +24,7 @@ app.controller 'mainCtrl', ['$scope', '$locations', '$sce',
       $locations.filterData name: n
 
     $scope.hideMobileList = ->
-      if window.innerWidth < 800
+      if $window.innerWidth < 800
         $scope.listOpen = false
 
     $scope.safeApply = (fn) ->
@@ -110,7 +110,7 @@ app.factory '$locations', ['$http', '$filter', ($http, $filter) ->
 
 class Geocoder extends google.maps.Geocoder
   geocode: (address, callback) ->
-    super 'address': address, (results, status) ->
+    super address: address, (results, status) ->
       callback results[0] if results.length
 
 class InfoWindow extends google.maps.InfoWindow
