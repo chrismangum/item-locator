@@ -87,6 +87,8 @@ app.directive 'infoWindow', ->
   templateUrl: 'info-window.html'
 
 app.factory '$locations', ['$http', '$filter', ($http, $filter) ->
+  $filter = $filter 'filter'
+
   activateItem: (item) ->
     @deactivateItem()
     @activeItem = item
@@ -96,8 +98,8 @@ app.factory '$locations', ['$http', '$filter', ($http, $filter) ->
     @activeItem?.isActive = false
     @activeItem = null
 
-  filterData: (filterVal) ->
-    @data = $filter('filter') @_pristineData, filterVal
+  filterData: (val) ->
+    @data = $filter @_pristineData, val
 
   get: (url) ->
     $http.get(url).then (res) =>
