@@ -68,7 +68,7 @@ gulp.task('wiredep', function () {
 
 gulp.task('nodemon', function () {
   plugin.nodemon({
-    script: 'server/app.js',
+    script: 'server/app.coffee',
     ext: 'js,coffee',
     ignore: ['public/**', 'node_modules/**']
   });
