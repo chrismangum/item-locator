@@ -5,21 +5,24 @@ var gulp = require('gulp'),
   wiredep = require('wiredep').stream;
 
 var paths = {
-  js: 'public/js/*.coffee',
+  clientJS: 'public/js/*.coffee',
+  serverJS: 'server/*.coffee',
   scss: 'public/css/*.scss',
   jade: 'views/*.jade',
   index: 'public/index.jade'
 };
 
 gulp.task('scripts', function () {
-  return gulp.src(paths.js)
+  gulp.src(paths.clientJS)
     .pipe(plugin.coffee())
-    //.pipe(plugin.uglify())
     .pipe(gulp.dest('public/js'));
+  gulp.src(paths.serverJS)
+    .pipe(plugin.coffee())
+    .pipe(gulp.dest('server'));
 });
 
 gulp.task('css', ['iconfont'], function () {
-  return gulp.src(paths.scss)
+  gulp.src(paths.scss)
     .pipe(plugin.sass())
     .pipe(plugin.autoprefixer("last 2 versions"))
     .pipe(plugin.minifyCss())
@@ -27,7 +30,7 @@ gulp.task('css', ['iconfont'], function () {
 });
 
 gulp.task('iconfont', function(){
-  return gulp.src(['public/fonts/svg/*.svg'])
+  gulp.src(['public/fonts/svg/*.svg'])
     .pipe(plugin.iconfontCss({
       fontName: 'icon-font',
       path: 'public/fonts/_icon-font.scss',
@@ -68,8 +71,8 @@ gulp.task('wiredep', function () {
 
 gulp.task('nodemon', function () {
   plugin.nodemon({
-    script: 'server/app.coffee',
-    ext: 'js,coffee',
+    script: 'server/app.js',
+    ext: 'coffee',
     ignore: ['public/**', 'node_modules/**']
   });
 });

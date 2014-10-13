@@ -4,6 +4,6 @@ path = require 'path'
 
 app = express()
 app.use express.logger 'dev'
-app.use '/static', express.static 'public'
+app.use express.static 'public'
 
-http.createServer(app).listen 3000
+http.createServer(app).listen process.env.PORT or 3000

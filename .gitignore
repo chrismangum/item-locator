@@ -1,5 +1,6 @@
 public/vendor
 public/js/*.js
+server/*.js
 .sass-cache
 node_modules/*
 public/*.html
